@@ -361,7 +361,7 @@ class CoreMod(loader.Module):
 
     async def _inline__cleardb(self, call: InlineCall):
         self._db.clear()
-        self._db.save()
+        self._db.save
         await utils.answer(call, self.strings("db_cleared"))
 
     async def installationcmd(self, message: Message):

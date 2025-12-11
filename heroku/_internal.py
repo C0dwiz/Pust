@@ -10,7 +10,7 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-import asyncio
+from asyncio import sleep
 import atexit
 import logging
 import os
@@ -18,12 +18,13 @@ import random
 import signal
 import sys
 
+from typing import Callable
 
-async def fw_protect():
-    await asyncio.sleep(random.randint(1000, 2000) / 1000)
+def fw_protect():
+    sleep(random.randint(1000, 2000) / 1000)
 
 
-def get_startup_callback() -> callable:
+def get_startup_callback() -> Callable[..., None]:
     return lambda *_: os.execl(
         sys.executable,
         sys.executable,

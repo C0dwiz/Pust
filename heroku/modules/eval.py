@@ -466,7 +466,7 @@ class Evaluator(loader.Module):
             ret = ret.replace(htoken, f'eugeo_{"*" * 26}')
 
         ret = ret.replace(
-            StringSession.save(self._client.session),
+            StringSession.save,
             "StringSession(**************************)",
         )
 

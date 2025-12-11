@@ -26,7 +26,7 @@ def proxy0(data):
     return proxy1
 
 
-_CELLTYPE = type(proxy0(None).__closure__[0])
+_celltype = type(proxy0(None).__closure__[0])
 
 
 def replace_all_refs(replace_from: typing.Any, replace_to: typing.Any) -> typing.Any:
@@ -98,7 +98,7 @@ def replace_all_refs(replace_from: typing.Any, replace_to: typing.Any) -> typing
                     new_tuple.append(obj)
             replace_all_refs(referrer, type(referrer)(new_tuple))
 
-        elif isinstance(referrer, _CELLTYPE):
+        elif isinstance(referrer, _celltype):
 
             def _proxy0(data):
                 def proxy1():
@@ -107,13 +107,13 @@ def replace_all_refs(replace_from: typing.Any, replace_to: typing.Any) -> typing
                 return proxy1
 
             proxy = _proxy0(replace_to)
-            newcell = proxy.__closure__[0]
-            replace_all_refs(referrer, newcell)
+            newel = proxy.__closure__[0]
+            replace_all_refs(referrer, newel)
 
         elif isinstance(referrer, _types.FunctionType):
             localsmap = {}
             for key in ["code", "globals", "name", "defaults", "closure"]:
-                orgattr = getattr(referrer, f"__{key}__")
+                orgattr = getattr(referrer, "__{key}__")
                 localsmap[key] = replace_to if orgattr is replace_from else orgattr
             localsmap["argdefs"] = localsmap["defaults"]
             del localsmap["defaults"]
@@ -123,7 +123,7 @@ def replace_all_refs(replace_from: typing.Any, replace_to: typing.Any) -> typing
         else:
             logger.debug("%s is not supported.", referrer)
 
-    if hit is False:
-        raise AttributeError(f"Object '{replace_from}' not found")
+    if not hit:
+        raise AttributeError("Object '{replace_from}' not found")
 
     return replace_from

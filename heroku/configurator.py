@@ -62,8 +62,9 @@ def api_config(tty: typing.Optional[bool] = None):
         tty,
     )
 
-    while api_id := tty_input("\033[0;95mEnter API ID: \033[0m", tty):
-        if api_id.isdigit():
+    while True:
+        api_id = tty_input("\033[0;95mEnter API ID: \033[0m", tty)
+        if api_id.strip() and api_id.isdigit():
             break
 
         tty_print("\033[0;91mInvalid ID\033[0m", tty)
@@ -72,7 +73,8 @@ def api_config(tty: typing.Optional[bool] = None):
         tty_print("\033[0;91mCancelled\033[0m", tty)
         sys.exit(0)
 
-    while api_hash := tty_input("\033[0;95mEnter API hash: \033[0m", tty):
+    while True:
+        api_hash = tty_input("\033[0;95mEnter API hash: \033[0m", tty)
         if len(api_hash) == 32 and all(
             symbol in string.hexdigits for symbol in api_hash
         ):
@@ -84,6 +86,6 @@ def api_config(tty: typing.Optional[bool] = None):
         tty_print("\033[0;91mCancelled\033[0m", tty)
         sys.exit(0)
 
-    main.save_config_key("api_id", int(api_id))
+    main.save_config_key("api_id", api_id)
     main.save_config_key("api_hash", api_hash)
     tty_print("\033[0;92mAPI config saved\033[0m", tty)

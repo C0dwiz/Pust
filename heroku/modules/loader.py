@@ -166,7 +166,7 @@ class LoaderMod(loader.Module):
                 delattr(lib.config._config[option], "_save_marker")
                 lib._lib_pointer("__config__", {})[option] = config.value
 
-        self._db.save()
+        self._db.save
 
     def update_modules_in_db(self):
         if self.allmodules.secure_boot:

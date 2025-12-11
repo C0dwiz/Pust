@@ -537,7 +537,7 @@ class Heroku:
 
         session.auth_key = client.session.auth_key
 
-        session.save()
+        session.save
 
         if not delay_restart:
             client.disconnect()

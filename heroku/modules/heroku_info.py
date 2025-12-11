@@ -238,7 +238,7 @@ class HerokuInfoMod(loader.Module):
                 embedded_color=True
             )
             path = f'{os.getcwd()}/assets/imginfo.{imgform}'
-            img.save(path)
+            img.save
             return Path(path).absolute()
         return None
     

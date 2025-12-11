@@ -129,7 +129,7 @@ class CustomTelegramClient(TelegramClient):
             return
 
         self.session.auth_key = self._sender.auth_key
-        self.session.save()
+        self.session.save
 
         if self._catch_up:
             ss = SessionState(0, 0, False, 0, 0, 0, 0, None)

@@ -28,7 +28,7 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-import asyncio
+from asyncio import sleep, get_event_loop, ensure_future
 import collections
 import contextlib
 import copy
@@ -104,7 +104,7 @@ def _decrement_ratelimit(delay, data, key, severity):
     def inner():
         data[key] = max(0, data[key] - severity)
 
-    asyncio.get_event_loop().call_later(delay, inner)
+    get_event_loop().call_later(delay, inner)
 
 
 class CommandDispatcher:
@@ -145,10 +145,10 @@ class CommandDispatcher:
         self.raw_handlers = []
         self._external_bl: typing.List[int] = []
 
-        asyncio.ensure_future(self._external_bl_reload_loop())
+        ensure_future(self._external_bl_reload_loop())
 
-    async def _handle_ratelimit(self, message: Message, func: callable) -> bool:
-        if await self.security.check(message, security.OWNER):
+    def _handle_ratelimit(self, message: Message, func: typing.Callable[..., typing.NoReturn]) -> bool:
+        if self.security.check(message, security.OWNER):
             return True
 
         func = getattr(func, "__func__", func)
@@ -234,7 +234,7 @@ class CommandDispatcher:
                 ):
                     res.append(
                         utils.remove_html(line, escape=True).replace(
-                            grep, f"<u>{grep}</u>"
+                            grep, "<u>{grep}</u>"
                         )
                     )
 
@@ -242,33 +242,33 @@ class CommandDispatcher:
                     res.append(utils.remove_html(line, escape=True))
 
             cont = (
-                (f"contain <b>{grep}</b>" if grep else "")
+                ("contain <b>{grep}</b>" if grep else "")
                 + (" and" if grep and ungrep else "")
                 + ((" do not contain <b>" + ungrep + "</b>") if ungrep else "")
             )
 
             if res:
-                text = f"<i>💬 Lines that {cont}:</i>\n" + "\n".join(res)
+                text = "<i>💬 Lines that {cont}:</i>\n" + "\n".join(res)
             else:
-                text = f"💬 <i>No lines that {cont}</i>"
+                text = "💬 <i>No lines that {cont}</i>"
 
             return text
 
-        async def my_edit(text, *args, **kwargs):
+        def my_edit(text, *args, **kwargs):
             text = process_text(text)
             kwargs["parse_mode"] = "HTML"
-            return await old_edit(text, *args, **kwargs)
+            return old_edit(text, *args, **kwargs)
 
-        async def my_reply(text, *args, **kwargs):
+        def my_reply(text, *args, **kwargs):
             text = process_text(text)
             kwargs["parse_mode"] = "HTML"
-            return await old_reply(text, *args, **kwargs)
+            return old_reply(text, *args, **kwargs)
 
-        async def my_respond(text, *args, **kwargs):
+        def my_respond(text, *args, **kwargs):
             text = process_text(text)
             kwargs["parse_mode"] = "HTML"
             kwargs.setdefault("reply_to", utils.get_topic(message))
-            return await old_respond(text, *args, **kwargs)
+            return old_respond(text, *args, **kwargs)
 
         message.edit = my_edit
         message.reply = my_reply
@@ -316,7 +316,7 @@ class CommandDispatcher:
                     message.message[len(prefix):],
                     parse_mode=lambda s: (
                         s,
-                        utils.relocate_entities(message.entities, -1, message.message)
+                         utils.relocate_entities(message.entities, -1, message.message)
                         or (),
                     ),
                 )
@@ -377,7 +377,7 @@ class CommandDispatcher:
             and event.message is not None
             and event.message.message is not None
             and not any(
-                f"@{username}" not in command.lower()
+                "@{username}" not in command.lower()
                 for username in self._cached_usernames
             )
         ):
@@ -397,8 +397,8 @@ class CommandDispatcher:
 
         if (
             not func
-            or not await self._handle_ratelimit(message, func)
-            or not await self.security.check(
+            or not self._handle_ratelimit(message, func)
+            or not self.security.check(
                 message,
                 func,
                 usernames=self._cached_usernames,
@@ -458,7 +458,7 @@ class CommandDispatcher:
 
         message, _, _, func = message
 
-        asyncio.ensure_future(
+        ensure_future(
             self.future_dispatcher(
                 func,
                 message,
@@ -698,7 +698,7 @@ class CommandDispatcher:
 
             # Run watcher via ensure_future so in case user has a lot
             # of watchers with long actions, they can run simultaneously
-            asyncio.ensure_future(
+            ensure_future(
                 self.future_dispatcher(
                     func,
                     message,
@@ -731,4 +731,4 @@ class CommandDispatcher:
                     )
                 ).json()["blacklist"]
 
-            await asyncio.sleep(60)
+            await sleep(60)

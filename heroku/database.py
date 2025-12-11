@@ -3,6 +3,7 @@
 # 🌐 https://github.com/hikariatama/Hikka
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
+from __future__ import annotations
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Heroku Userbot
@@ -10,13 +11,16 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-import asyncio
+from asyncio import sleep, Future, ensure_future
 import collections
 import json
 import logging
 import os
 import re
 import time
+from typing import Any
+
+from heroku.pointers import NamedTupleMiddlewareList, NamedTupleMiddlewareDict, PointerList, PointerDict
 
 try:
     import redis
@@ -62,13 +66,15 @@ class NoAssetsChannel(Exception):
 class Database(dict):
     def __init__(self, client: CustomTelegramClient):
         super().__init__()
+        self._db_file = None
         self._client: CustomTelegramClient = client
         self._next_revision_call: int = 0
         self._revisions: typing.List[dict] = []
         self._assets: int = None
         self._me: User = None
         self._redis: redis.Redis = None
-        self._saving_task: asyncio.Future = None
+        self._saving_task: Future = None
+        self._data: dict[str, dict[str, JSONSerializable]] = {}
 
     def __repr__(self):
         return object.__repr__(self)
@@ -81,45 +87,44 @@ class Database(dict):
             )
             pipe.execute()
 
-    async def remote_force_save(self) -> bool:
+    def remote_force_save(self) -> bool:
         """Force save database to remote endpoint without waiting"""
         if not self._redis:
             return False
 
-        await utils.run_sync(self._redis_save_sync)
+        utils.run_sync(self._redis_save_sync)
         logger.debug("Published db to Redis")
         return True
 
-    async def _redis_save(self) -> bool:
+    def _redis_save(self) -> bool:
         """Save database to redis"""
         if not self._redis:
             return False
 
-        await asyncio.sleep(5)
-        await utils.run_sync(self._redis_save_sync)
+        sleep(5)
+        utils.run_sync(self._redis_save_sync)
         logger.debug("Published db to Redis")
         self._saving_task = None
         return True
 
-    async def redis_init(self) -> bool:
+    def redis_init(self, REDIS_URI: str) -> bool | None:
         """Init redis database"""
-        if REDIS_URI := (
-            os.environ.get("REDIS_URL") or main.get_config_key("redis_uri")
-        ):
+        if REDIS_URI is None:
             self._redis = redis.Redis.from_url(REDIS_URI)
+            return None
         else:
             return False
 
-    async def init(self):
+    def init(self):
         """Asynchronous initialization unit"""
         if os.environ.get("REDIS_URL") or main.get_config_key("redis_uri"):
-            await self.redis_init()
+            self.redis_init(os.environ.get("REDIS_URL") or main.get_config_key("redis_uri"))
 
-        self._db_file = main.BASE_PATH / f"config-{self._client.tg_id}.json"
+        self._db_file = main.BASE_PATH / "config-{self._client.tg_id}.json"
         self.read()
 
         try:
-            self._assets, _ = await utils.asset_channel(
+            self._assets, _ = utils.asset_channel(
                 self._client,
                 "heroku-assets",
                 "🌆 Your Heroku assets will be stored here",
@@ -200,6 +205,7 @@ class Database(dict):
 
         return True
 
+    @property
     def save(self) -> bool:
         """Save database"""
         if not self.process_db_autofix(self):
@@ -230,18 +236,18 @@ class Database(dict):
 
         if self._redis:
             if not self._saving_task:
-                self._saving_task = asyncio.ensure_future(self._redis_save())
+                self._saving_task = ensure_future(self._redis_save()) # type: ignore
             return True
 
         try:
             self._db_file.write_text(json.dumps(self, indent=4))
         except Exception:
-            logger.exception("Database save failed!")
+            logger.exception("Database save failed!\n{}".format(Exception))
             return False
 
         return True
 
-    async def store_asset(self, message: Message) -> int:
+    def store_asset(self, message: Message) -> int:
         """
         Save assets
         returns asset_id as integer
@@ -250,10 +256,10 @@ class Database(dict):
             raise NoAssetsChannel("Tried to save asset to non-existing asset channel")
 
         return (
-            (await self._client.send_message(self._assets, message)).id
+            (self._client.send_message(self._assets, message)).id
             if isinstance(message, Message)
             else (
-                await self._client.send_message(
+                self._client.send_message(
                     self._assets,
                     file=message,
                     force_document=True,
@@ -261,14 +267,14 @@ class Database(dict):
             ).id
         )
 
-    async def fetch_asset(self, asset_id: int) -> typing.Optional[Message]:
+    def fetch_asset(self, asset_id: int) -> typing.Optional[Message]:
         """Fetch previously saved asset by its asset_id"""
         if not self._assets:
             raise NoAssetsChannel(
                 "Tried to fetch asset from non-existing asset channel"
             )
 
-        asset = await self._client.get_messages(self._assets, ids=[asset_id])
+        asset = self._client.get_messages(self._assets, ids=[asset_id])
 
         return asset[0] if asset else None
 
@@ -277,10 +283,10 @@ class Database(dict):
         owner: str,
         key: str,
         default: typing.Optional[JSONSerializable] = None,
-    ) -> JSONSerializable:
+    ) -> JSONSerializable | None:
         """Get database key"""
         try:
-            return self[owner][key]
+            return self._data[owner][key]
         except KeyError:
             return default
 
@@ -289,26 +295,26 @@ class Database(dict):
         if not utils.is_serializable(owner):
             raise RuntimeError(
                 "Attempted to write object to "
-                f"{owner=} ({type(owner)=}) of database. It is not "
+                "{owner=} ({type(owner)=}) of database. It is not "
                 "JSON-serializable key which will cause errors"
             )
 
         if not utils.is_serializable(key):
             raise RuntimeError(
                 "Attempted to write object to "
-                f"{key=} ({type(key)=}) of database. It is not "
+                "{key=} ({type(key)=}) of database. It is not "
                 "JSON-serializable key which will cause errors"
             )
 
         if not utils.is_serializable(value):
             raise RuntimeError(
                 "Attempted to write object of "
-                f"{key=} ({type(value)=}) to database. It is not "
+                "{key=} ({type(value)=}) to database. It is not "
                 "JSON-serializable value which will cause errors"
             )
 
-        super().setdefault(owner, {})[key] = value
-        return self.save()
+        super(self.__class__, self).setdefault(owner, {})[key] = value
+        return self.save
 
     def pointer(
         self,
@@ -316,7 +322,7 @@ class Database(dict):
         key: str,
         default: typing.Optional[JSONSerializable] = None,
         item_type: typing.Optional[typing.Any] = None,
-    ) -> typing.Union[JSONSerializable, PointerList, PointerDict]:
+    ) -> NamedTupleMiddlewareList | NamedTupleMiddlewareDict | PointerList | PointerDict | Any:
         """Get a pointer to database key"""
         value = self.get(owner, key, default)
         mapping = {
@@ -330,16 +336,18 @@ class Database(dict):
             None,
         )
 
-        if (current_value := self.get(owner, key, None)) and type(
-            current_value
-        ) is not type(default):
+        current_value = self.get(owner, key, None)
+        if current_value and type(current_value) is not type(default):
             raise ValueError(
-                f"Can't switch the type of pointer in database (current: {type(current_value)}, requested: {type(default)})"
+                "Can't switch the type of pointer in database (current: {current_type}, requested: {requested_type})".format(
+                    current_type=type(current_value),
+                    requested_type=type(default)
+                )
             )
 
         if pointer_constructor is None:
             raise ValueError(
-                f"Pointer for type {type(value).__name__} is not implemented"
+                "Pointer for type {type(value).__name__} is not implemented"
             )
 
         if item_type is not None:

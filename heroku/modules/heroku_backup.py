@@ -211,7 +211,7 @@ class HerokuBackupMod(loader.Module):
 
                 self._db.clear()
                 self._db.update(**db_data)
-                self._db.save()
+                self._db.save
 
                 with zf.open("mods.zip") as modzip_bytes:
                     with zipfile.ZipFile(io.BytesIO(modzip_bytes.read())) as modzip:
@@ -324,7 +324,7 @@ class HerokuBackupMod(loader.Module):
 
         self._db.clear()
         self._db.update(**decoded_text)
-        self._db.save()
+        self._db.save
 
         await utils.answer(message, self.strings("db_restored"))
         await self.invoke("restart", "-f", peer=message.peer_id)
@@ -465,7 +465,7 @@ class HerokuBackupMod(loader.Module):
 
                 self._db.clear()
                 self._db.update(**db_data)
-                self._db.save()
+                self._db.save
 
                 with zf.open("mods.zip") as modzip_bytes:
                     with zipfile.ZipFile(io.BytesIO(modzip_bytes.read())) as modzip:

@@ -27,6 +27,7 @@ import time
 import typing
 from dataclasses import dataclass, field
 from importlib.abc import SourceLoader
+from types import CodeType
 
 import requests
 from herokutl.hints import EntityLike
@@ -54,7 +55,12 @@ from .inline.types import (
 from .pointers import PointerDict, PointerList
 
 if typing.TYPE_CHECKING:
+    from .inline.core import InlineManager
     from .loader import Modules
+    from .tl_cache import CustomTelegramClient
+
+    class Module:
+        pass
 
 __all__ = [
     "JSONSerializable",
@@ -80,33 +86,38 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-JSONSerializable = typing.Union[str, int, float, bool, list, dict, None]
-HerokuReplyMarkup = typing.Union[typing.List[typing.List[dict]], typing.List[dict], dict]
-ListLike = typing.Union[list, set, tuple]
+JSONSerializable = typing.Union[str, int, float, bool, list, dict, None] # type: ignore
+HerokuReplyMarkup = typing.Union[typing.List[typing.List[dict]], typing.List[dict], dict] # type: ignore
+ListLike = typing.Union[list, set, tuple] # type: ignore
 Command = typing.Callable[..., typing.Awaitable[typing.Any]]
 
 
 class StringLoader(SourceLoader):
     """Load a python module/file from a string"""
 
-    def __init__(self, data: str, origin: str):
-        self.data = data.encode("utf-8") if isinstance(data, str) else data
+    def __init__(self, data: str | bytes, origin: str):
+        if isinstance(data, str):
+            self.data: bytes = data.encode("utf-8")
+        elif isinstance(data, bytes):
+            self.data: bytes = data
+        else:
+            raise TypeError(f"Expected str or bytes, got {type(data).__name__}")
+        
         self.origin = origin
 
-    def get_source(self, _=None) -> str:
+    def get_source(self, fullname: str) -> str:
         return self.data.decode("utf-8")
 
-    def get_code(self, fullname: str) -> bytes:
-        return (
-            compile(source, self.origin, "exec", dont_inherit=True)
-            if (source := self.get_data(fullname))
-            else None
-        )
+    def get_code(self, fullname: str) -> CodeType | None:
+        source = self.get_data(fullname)
+        if source:
+            return compile(source.decode("utf-8"), self.origin, "exec", dont_inherit=True)
+        return None
 
-    def get_filename(self, *args, **kwargs) -> str:
+    def get_filename(self, fullname: str) -> str:
         return self.origin
 
-    def get_data(self, *args, **kwargs) -> bytes:
+    def get_data(self, path: str) -> bytes:
         return self.data
 
 
@@ -126,13 +137,18 @@ class Module:
         self.allmodules: "Modules"
         self.db = self.allmodules.db
         self._db = self.allmodules.db
-        self.client = self.allmodules.client
-        self._client = self.allmodules.client
-        self.lookup = self.allmodules.lookup
-        self.get_prefix = self.allmodules.get_prefix
-        self.get_prefixes = self.allmodules.get_prefixes
-        self.inline = self.allmodules.inline
-        self.allclients = self.allmodules.allclients
+
+        self.client: "CustomTelegramClient" = self.allmodules.client
+        self._client: "CustomTelegramClient" = self.allmodules.client
+        
+        self.lookup: Callable = self.allmodules.lookup
+        self.get_prefix: Callable = self.allmodules.get_prefix
+        self.get_prefixes: Callable = self.allmodules.get_prefixes
+
+        self.inline: "InlineManager" = self.allmodules.inline
+
+        self.allclients: List["CustomTelegramClient"] = self.allmodules.allclients
+
         self.tg_id: int = self._client.tg_id
         self._tg_id: int = self._client.tg_id
 

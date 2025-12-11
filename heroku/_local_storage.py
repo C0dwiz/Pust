@@ -12,7 +12,7 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-import asyncio
+from asyncio import sleep
 import contextlib
 import hashlib
 import logging
@@ -27,7 +27,7 @@ from .version import __version__
 
 logger = logging.getLogger(__name__)
 
-MAX_FILESIZE = 1024 * 1024 * 5  # 5 MB
+max_filesize = 1024 * 1024 * 5  # 5 MB
 MAX_TOTALSIZE = 1024 * 1024 * 100  # 100 MB
 
 
@@ -50,7 +50,7 @@ class LocalStorage:
     def _get_path(self, repo: str, module_name: str) -> str:
         return os.path.join(
             self._path,
-            hashlib.sha256(f"{repo}_{module_name}".encode()).hexdigest() + ".py",
+            hashlib.sha256("{repo}_{module_name}".encode()).hexdigest() + ".py",
         )
 
     def save(self, repo: str, module_name: str, module_code: str):
@@ -61,7 +61,7 @@ class LocalStorage:
         :param module_code: Module source code.
         """
         size = len(module_code)
-        if size > MAX_FILESIZE:
+        if size > max_filesize:
             logger.warning(
                 "Module %s from %s is too large (%s bytes) to save to local cache.",
                 module_name,
@@ -103,16 +103,16 @@ class RemoteStorage:
         self._local_storage = LocalStorage()
         self._client = client
 
-    async def preload(self, urls: typing.List[str]):
+    def preload(self, urls: typing.List[str]):
         """Preloads modules from remote storage."""
         logger.debug("Preloading modules from remote storage.")
         for url in urls:
             logger.debug("Preloading module %s", url)
 
             with contextlib.suppress(Exception):
-                await self.fetch(url)
+                self.fetch(url)
 
-            await asyncio.sleep(5)
+            sleep(5)
 
 
     @staticmethod
@@ -127,18 +127,18 @@ class RemoteStorage:
         if domain_name == "raw.githubusercontent.com":
             owner, repo, branch = url.split("/")[3:6]
             module_name = url.split("/")[-1].split(".")[0]
-            repo = f"git+{owner}/{repo}:{branch}"
+            repo = "git+{owner}/{repo}:{branch}"
         elif domain_name == "github.com":
             owner, repo, _, branch = url.split("/")[3:7]
             module_name = url.split("/")[-1].split(".")[0]
-            repo = f"git+{owner}/{repo}:{branch}"
+            repo = "git+{owner}/{repo}:{branch}"
         else:
             repo, module_name = url.rsplit("/", maxsplit=1)
             repo = repo.strip("/")
 
         return url, repo, module_name
 
-    async def fetch(self, url: str, auth: typing.Optional[str] = None) -> str:
+    def fetch(self, url: str, auth: typing.Optional[str] = None) -> str:
         """
         Fetches the module from the remote storage.
         :param url: URL to the module.
@@ -147,7 +147,7 @@ class RemoteStorage:
         """
         url, repo, module_name = self._parse_url(url)
         try:
-            r = await utils.run_sync(
+            r = utils.run_sync(
                 requests.get,
                 url,
                 auth=(tuple(auth.split(":", 1)) if auth else None),
@@ -164,7 +164,8 @@ class RemoteStorage:
                 "Can't load module from remote storage. Trying local storage.",
                 exc_info=True,
             )
-            if module := self._local_storage.fetch(repo, module_name):
+            module = self._local_storage.fetch(repo, module_name)
+            if module:
                 logger.debug("Module source loaded from local storage.")
                 return module
 
