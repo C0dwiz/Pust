@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 class Web(root.Web):
     def __init__(self, **kwargs):
+        self.url = None
         self.runner = None
         self.port = None
         self.running = asyncio.Event()
@@ -61,7 +62,7 @@ class Web(root.Web):
         self.app.router.add_get("/favicon.ico", self.favicon)
         self.app.router.add_static("/static/", "web-resources/static")
 
-    async def start_if_ready(
+    def start_if_ready(
         self,
         total_count: int,
         port: int,
@@ -69,11 +70,11 @@ class Web(root.Web):
     ):
         if total_count <= len(self.client_data):
             if not self.running.is_set():
-                await self.start(port, proxy_pass=proxy_pass)
+                self.start(port, proxy_pass=proxy_pass)
 
             self.ready.set()
 
-    async def get_url(self, proxy_pass: bool) -> str:
+    def get_url(self, proxy_pass: bool) -> str:
         url = None
 
         if all(option in os.environ for option in {"LAVHOST", "USER", "SERVER"}):
@@ -81,7 +82,7 @@ class Web(root.Web):
 
         if proxy_pass:
             with contextlib.suppress(Exception):
-                url = await self.proxypasser.get_url(timeout=10)
+                url = self.proxypasser.get_url(timeout=10)
 
         if not url:
             ip = (
@@ -96,7 +97,7 @@ class Web(root.Web):
                 .strip()
             )
 
-            url = f"http://{ip}:{self.port}"
+            url = "http://{ip}:{self.port}"
 
         self.url = url
         return url
