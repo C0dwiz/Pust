@@ -28,6 +28,12 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
+# SPDX-License-Identifier: GNU AGPL v3.0
+#
+# This file is a part of Pust Userbot.
+#
+# Copyright (C) 2026 CodWiz
+
 from asyncio import sleep, get_event_loop, ensure_future
 import collections
 import contextlib
@@ -241,7 +247,7 @@ class CommandDispatcher:
                 if not grep and ungrep and ungrep not in utils.remove_html(line):
                     res.append(utils.remove_html(line, escape=True))
 
-            cont = (
+            (
                 ("contain <b>{grep}</b>" if grep else "")
                 + (" and" if grep and ungrep else "")
                 + ((" do not contain <b>" + ungrep + "</b>") if ungrep else "")

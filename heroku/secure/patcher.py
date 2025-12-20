@@ -1,3 +1,10 @@
+
+# SPDX-License-Identifier: GNU AGPL v3.0
+#
+# This file is a part of Pust Userbot.
+#
+# Copyright (C) 2026 CodWiz
+
 import functools
 import logging
 import re

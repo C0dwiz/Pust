@@ -8,6 +8,12 @@ __version__ = (2, 0, 0)
 # You may obtain a copy of the License at
 # 🔑 http://www.apache.org/licenses/LICENSE-2.0
 
+# SPDX-License-Identifier: GNU AGPL v3.0
+#
+# This file is a part of Pust Userbot.
+#
+# Copyright (C) 2026 CodWiz
+
 import asyncio
 import aiohttp
 import subprocess

@@ -11,24 +11,56 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-__version__ = (2, 0, 0)
+# SPDX-License-Identifier: GNU AGPL v3.0
+#
+# This file is a part of Pust Userbot.
+#
+# Copyright (C) 2026 CodWiz
 
 import os
 
 import git
 from heroku._internal import restart
 
-try:
-    branch = git.Repo(
-        path=os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    ).active_branch.name
-except Exception:
-    branch = "master"
+# Version constants
+__version__ = (2, 0, 0)
+MASTER_BRANCH: str = "master"
 
 
-async def check_branch(me_id: int, allowed_ids: list):
-    if branch != "master" and me_id not in allowed_ids:
-        repo = git.Repo(path=os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+def get_repo_path() -> str:
+    """Get absolute path to the repository root."""
+    current_dir = os.path.dirname(__file__)
+    parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
+    return parent_dir
+
+
+def get_active_branch() -> str:
+    """Get current git branch name."""
+    try:
+        repo = git.Repo(path=get_repo_path())
+        return repo.active_branch.name
+    except (git.exc.InvalidGitRepositoryError, git.exc.NoSuchPathError, AttributeError):
+        return MASTER_BRANCH
+
+
+branch: str = get_active_branch()
+
+
+async def check_branch(me_id: int, allowed_ids: list[int]) -> None:
+    """
+    Check if current branch is allowed for the user.
+
+    Args:
+        me_id: Current user ID
+        allowed_ids: List of user IDs allowed to use non-master branches
+    """
+    if branch == MASTER_BRANCH or me_id in allowed_ids:
+        return
+
+    try:
+        repo = git.Repo(path=get_repo_path())
         repo.git.reset("--hard", "HEAD")
-        repo.git.checkout("master", force=True)
+        repo.git.checkout(MASTER_BRANCH, force=True)
         restart()
+    except (git.exc.GitCommandError, git.exc.InvalidGitRepositoryError) as e:
+        print(f"Failed to switch branch: {e}")

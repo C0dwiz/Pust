@@ -3,7 +3,6 @@
 # 🌐 https://github.com/hikariatama/Hikka
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
-from __future__ import annotations
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Heroku Userbot
@@ -11,38 +10,36 @@ from __future__ import annotations
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-from asyncio import sleep, Future, ensure_future
-import collections
+# SPDX-License-Identifier: GNU AGPL v3.0
+#
+# This file is a part of Pust Userbot.
+#
+# Copyright (C) 2026 CodWiz
+
+from __future__ import annotations
+
+import asyncio
+import collections.abc
 import json
 import logging
 import os
 import re
 import time
-from typing import Any
+from pathlib import Path
+from typing import Any, Optional, TypeVar, cast
 
-from heroku.pointers import NamedTupleMiddlewareList, NamedTupleMiddlewareDict, PointerList, PointerDict
-
-try:
-    import redis
-except ImportError as e:
-    if "RAILWAY" in os.environ:
-        raise e
-
-
-import typing
-
-from herokutl.errors.rpcerrorlist import ChannelsTooMuchError
-from herokutl.tl.types import Message, User
-
-from . import main, utils
-from .pointers import (
+from heroku.pointers import (
+    NamedTupleMiddlewareList,
+    NamedTupleMiddlewareDict,
+    PointerList,
+    PointerDict,
     BaseSerializingMiddlewareDict,
     BaseSerializingMiddlewareList,
-    NamedTupleMiddlewareDict,
-    NamedTupleMiddlewareList,
-    PointerDict,
-    PointerList,
 )
+from herokutl.errors.rpcerrorlist import ChannelsTooMuchError
+from herokutl.tl.types import Message
+
+from . import main, utils
 from .tl_cache import CustomTelegramClient
 from .types import JSONSerializable
 
@@ -57,6 +54,7 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+T = TypeVar("T", bound=JSONSerializable)
 
 
 class NoAssetsChannel(Exception):
@@ -64,26 +62,42 @@ class NoAssetsChannel(Exception):
 
 
 class Database(dict):
+    """Database manager for Heroku Userbot"""
+    
+    _MAX_REVISIONS = 15
+    _REVISION_INTERVAL = 3
+
     def __init__(self, client: CustomTelegramClient):
         super().__init__()
-        self._db_file = None
+        self._db_file: Optional[Path] = None
         self._client: CustomTelegramClient = client
-        self._next_revision_call: int = 0
-        self._revisions: typing.List[dict] = []
-        self._assets: int = None
-        self._me: User = None
-        self._redis: redis.Redis = None
-        self._saving_task: Future = None
+        self._next_revision_call: float = 0.0
+        self._revisions: list[dict[str, Any]] = []
+        self._assets: Optional[int] = None
+        self._redis = None
+        self._saving_task: Optional[asyncio.Future] = None
         self._data: dict[str, dict[str, JSONSerializable]] = {}
 
-    def __repr__(self):
+        try:
+            import redis
+            self._redis_client = redis
+        except ImportError:
+            self._redis_client = None
+            if "RAILWAY" in os.environ:
+                raise
+
+    def __repr__(self) -> str:
         return object.__repr__(self)
 
-    def _redis_save_sync(self):
+    def _redis_save_sync(self) -> None:
+        """Synchronously save database to Redis"""
+        if not self._redis:
+            return
+
         with self._redis.pipeline() as pipe:
             pipe.set(
                 str(self._client.tg_id),
-                json.dumps(self, ensure_ascii=True),
+                json.dumps(self, ensure_ascii=True, separators=(",", ":")),
             )
             pipe.execute()
 
@@ -92,122 +106,148 @@ class Database(dict):
         if not self._redis:
             return False
 
-        utils.run_sync(self._redis_save_sync)
-        logger.debug("Published db to Redis")
-        return True
+        try:
+            utils.run_sync(self._redis_save_sync)
+            logger.debug("Published database to Redis")
+            return True
+        except Exception as e:
+            logger.error("Failed to force save database to Redis: %s", e)
+            return False
 
-    def _redis_save(self) -> bool:
-        """Save database to redis"""
+    async def _redis_save(self) -> bool:
+        """Save database to Redis asynchronously"""
         if not self._redis:
             return False
 
-        sleep(5)
-        utils.run_sync(self._redis_save_sync)
-        logger.debug("Published db to Redis")
-        self._saving_task = None
-        return True
+        await asyncio.sleep(5)
+        
+        try:
+            utils.run_sync(self._redis_save_sync)
+            logger.debug("Published database to Redis")
+            return True
+        except Exception as e:
+            logger.error("Failed to save database to Redis: %s", e)
+            return False
+        finally:
+            self._saving_task = None
 
-    def redis_init(self, REDIS_URI: str) -> bool | None:
-        """Init redis database"""
-        if REDIS_URI is None:
-            self._redis = redis.Redis.from_url(REDIS_URI)
-            return None
-        else:
+    def redis_init(self, redis_uri: Optional[str]) -> bool:
+        """Initialize Redis database connection"""
+        if not redis_uri or self._redis_client is None:
             return False
 
-    def init(self):
-        """Asynchronous initialization unit"""
-        if os.environ.get("REDIS_URL") or main.get_config_key("redis_uri"):
-            self.redis_init(os.environ.get("REDIS_URL") or main.get_config_key("redis_uri"))
+        try:
+            self._redis = self._redis_client.Redis.from_url(redis_uri)
+            logger.info("Redis connection established")
+            return True
+        except Exception as e:
+            logger.error("Failed to connect to Redis: %s", e)
+            return False
 
-        self._db_file = main.BASE_PATH / "config-{self._client.tg_id}.json"
+    async def init(self) -> None:
+        """Asynchronous initialization unit"""
+        redis_uri = os.environ.get("REDIS_URL") or main.get_config_key("redis_uri")
+        if redis_uri:
+            self.redis_init(redis_uri)
+
+        self._db_file = main.BASE_PATH / f"config-{self._client.tg_id}.json"
         self.read()
 
         try:
-            self._assets, _ = utils.asset_channel(
+            self._assets, _ = await utils.asset_channel(
                 self._client,
                 "heroku-assets",
                 "🌆 Your Heroku assets will be stored here",
                 archive=True,
-                avatar="https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/heroku/heroku_assets.png"
+                avatar=(
+                    "https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/"
+                    "heroku/heroku_assets.png"
+                )
             )
         except ChannelsTooMuchError:
             self._assets = None
             logger.error(
-                "Can't find and/or create assets folder\n"
+                "Cannot find and/or create assets folder\n"
                 "This may cause several consequences, such as:\n"
-                "- Non working assets feature (e.g. notes)\n"
-                "- This error will occur every restart\n\n"
+                "- Non-working assets feature (e.g., notes)\n"
+                "- This error will occur on every restart\n\n"
                 "You can solve this by leaving some channels/groups"
             )
 
-    def read(self):
-        """Read database and stores it in self"""
+    def read(self) -> None:
+        """Read database and store it in self"""
         if self._redis:
             try:
-                self.update(
-                    **json.loads(
-                        self._redis.get(
-                            str(self._client.tg_id),
-                        ).decode(),
-                    )
-                )
-            except Exception:
-                logger.exception("Error reading redis database")
+                data = self._redis.get(str(self._client.tg_id))
+                if data:
+                    self.update(**json.loads(data.decode()))
+                    logger.debug("Database loaded from Redis")
+                else:
+                    logger.debug("No database found in Redis")
+            except json.JSONDecodeError as e:
+                logger.error("Failed to decode JSON from Redis: %s", e)
+            except Exception as e:
+                logger.exception("Error reading Redis database: %s", e)
+            return
+
+        if not self._db_file or not self._db_file.exists():
+            logger.debug("Database file not found, creating new one...")
             return
 
         try:
-            db = self._db_file.read_text()
-            if re.search(r'"(hikka\.)(\S+\":)', db):
-                logging.warning("Converting db after update")
-                db = re.sub(r'(hikka\.)(\S+\":)', lambda m: 'heroku.' + m.group(2), db)
-            self.update(**json.loads(db))
-        except json.decoder.JSONDecodeError:
-            logger.warning("Database read failed! Creating new one...")
-        except FileNotFoundError:
-            logger.debug("Database file not found, creating new one...")
+            db_content = self._db_file.read_text()
+            # Convert legacy Hikka keys to Heroku
+            if re.search(r'"(hikka\.)(\S+\":)', db_content):
+                logger.warning("Converting database after update")
+                db_content = re.sub(
+                    r'(hikka\.)(\S+\":)',
+                    lambda m: 'heroku.' + m.group(2),
+                    db_content
+                )
+            self.update(**json.loads(db_content))
+            logger.debug("Database loaded from file")
+        except json.JSONDecodeError as e:
+            logger.error("Database JSON decode failed: %s", e)
+        except Exception as e:
+            logger.exception("Unexpected error reading database: %s", e)
 
     def process_db_autofix(self, db: dict) -> bool:
+        """Validate and fix database structure"""
         if not utils.is_serializable(db):
             return False
 
         for key, value in db.copy().items():
             if not isinstance(key, (str, int)):
                 logger.warning(
-                    "DbAutoFix: Dropped key %s, because it is not string or int",
+                    "DbAutoFix: Dropped key %s because it is not string or int",
                     key,
                 )
+                del db[key]
                 continue
 
             if not isinstance(value, dict):
-                # If value is not a dict (module values), drop it,
-                # otherwise it may cause problems
-                del db[key]
                 logger.warning(
-                    "DbAutoFix: Dropped key %s, because it is non-dict, but %s",
+                    "DbAutoFix: Dropped key %s because it is non-dict, but %s",
                     key,
-                    type(value),
+                    type(value).__name__,
                 )
+                del db[key]
                 continue
 
-            for subkey in value:
+            for subkey in list(value.keys()):
                 if not isinstance(subkey, (str, int)):
-                    del db[key][subkey]
                     logger.warning(
-                        (
-                            "DbAutoFix: Dropped subkey %s of db key %s, because it is"
-                            " not string or int"
-                        ),
+                        "DbAutoFix: Dropped subkey %s of key %s (not string or int)",
                         subkey,
                         key,
                     )
-                    continue
+                    del db[key][subkey]
 
         return True
 
     @property
     def save(self) -> bool:
-        """Save database"""
+        """Save database to persistent storage"""
         if not self.process_db_autofix(self):
             try:
                 rev = self._revisions.pop()
@@ -215,165 +255,160 @@ class Database(dict):
                     rev = self._revisions.pop()
             except IndexError:
                 raise RuntimeError(
-                    "Can't find revision to restore broken database from "
-                    "database is most likely broken and will lead to problems, "
+                    "Cannot find revision to restore broken database from. "
+                    "Database is most likely broken and will lead to problems, "
                     "so its save is forbidden."
                 )
 
             self.clear()
             self.update(**rev)
-
+            
+            logger.error("Database restored from previous revision due to corruption")
             raise RuntimeError(
                 "Rewriting database to the last revision because new one destructed it"
             )
 
         if self._next_revision_call < time.time():
-            self._revisions += [dict(self)]
-            self._next_revision_call = time.time() + 3
+            self._revisions.append(dict(self))
+            self._next_revision_call = time.time() + self._REVISION_INTERVAL
 
-        while len(self._revisions) > 15:
-            self._revisions.pop()
+        while len(self._revisions) > self._MAX_REVISIONS:
+            self._revisions.pop(0)
 
         if self._redis:
-            if not self._saving_task:
-                self._saving_task = ensure_future(self._redis_save()) # type: ignore
+            if not self._saving_task or self._saving_task.done():
+                self._saving_task = asyncio.ensure_future(self._redis_save())
             return True
 
         try:
-            self._db_file.write_text(json.dumps(self, indent=4))
-        except Exception:
-            logger.exception("Database save failed!\n{}".format(Exception))
+            if self._db_file:
+                self._db_file.write_text(json.dumps(self, indent=4))
+                logger.debug("Database saved to file")
+                return True
+        except Exception as e:
+            logger.exception("Database save failed: %s", e)
             return False
 
-        return True
+        return False
 
-    def store_asset(self, message: Message) -> int:
+    async def store_asset(self, message: Message) -> int:
         """
-        Save assets
-        returns asset_id as integer
+        Save asset to Telegram channel
+        
+        Returns:
+            Asset ID as integer
         """
         if not self._assets:
-            raise NoAssetsChannel("Tried to save asset to non-existing asset channel")
+            raise NoAssetsChannel(
+                "Tried to save asset to non-existing asset channel"
+            )
 
-        return (
-            (self._client.send_message(self._assets, message)).id
-            if isinstance(message, Message)
-            else (
-                self._client.send_message(
+        try:
+            if isinstance(message, Message):
+                sent = await self._client.send_message(self._assets, message)
+            else:
+                sent = await self._client.send_message(
                     self._assets,
                     file=message,
                     force_document=True,
                 )
-            ).id
-        )
+            return sent.id
+        except Exception as e:
+            logger.error("Failed to store asset: %s", e)
+            raise
 
-    def fetch_asset(self, asset_id: int) -> typing.Optional[Message]:
+    async def fetch_asset(self, asset_id: int) -> Optional[Message]:
         """Fetch previously saved asset by its asset_id"""
         if not self._assets:
             raise NoAssetsChannel(
                 "Tried to fetch asset from non-existing asset channel"
             )
 
-        asset = self._client.get_messages(self._assets, ids=[asset_id])
-
-        return asset[0] if asset else None
+        try:
+            assets = await self._client.get_messages(self._assets, ids=[asset_id])
+            return assets[0] if assets else None
+        except Exception as e:
+            logger.error("Failed to fetch asset %s: %s", asset_id, e)
+            return None
 
     def get(
         self,
         owner: str,
         key: str,
-        default: typing.Optional[JSONSerializable] = None,
-    ) -> JSONSerializable | None:
+        default: Optional[T] = None,
+    ) -> Optional[T]:
         """Get database key"""
         try:
-            return self._data[owner][key]
+            return cast(T, self._data[owner][key])
         except KeyError:
             return default
 
     def set(self, owner: str, key: str, value: JSONSerializable) -> bool:
         """Set database key"""
-        if not utils.is_serializable(owner):
-            raise RuntimeError(
-                "Attempted to write object to "
-                "{owner=} ({type(owner)=}) of database. It is not "
-                "JSON-serializable key which will cause errors"
-            )
+        for name, val, val_type in [
+            ("owner", owner, str),
+            ("key", key, str),
+            ("value", value, JSONSerializable),
+        ]:
+            if not utils.is_serializable(val):
+                raise RuntimeError(
+                    f"Attempted to write non-JSON-serializable {name} "
+                    f"({val_type.__name__}) to database"
+                )
 
-        if not utils.is_serializable(key):
-            raise RuntimeError(
-                "Attempted to write object to "
-                "{key=} ({type(key)=}) of database. It is not "
-                "JSON-serializable key which will cause errors"
-            )
-
-        if not utils.is_serializable(value):
-            raise RuntimeError(
-                "Attempted to write object of "
-                "{key=} ({type(value)=}) to database. It is not "
-                "JSON-serializable value which will cause errors"
-            )
-
-        super(self.__class__, self).setdefault(owner, {})[key] = value
+        self.setdefault(owner, {})[key] = value
         return self.save
 
     def pointer(
         self,
         owner: str,
         key: str,
-        default: typing.Optional[JSONSerializable] = None,
-        item_type: typing.Optional[typing.Any] = None,
-    ) -> NamedTupleMiddlewareList | NamedTupleMiddlewareDict | PointerList | PointerDict | Any:
+        default: Optional[JSONSerializable] = None,
+        item_type: Optional[type] = None,
+    ) -> Any:
         """Get a pointer to database key"""
         value = self.get(owner, key, default)
-        mapping = {
-            list: PointerList,
-            dict: PointerDict,
-            collections.abc.Hashable: lambda v: v,
-        }
-
-        pointer_constructor = next(
-            (pointer for type_, pointer in mapping.items() if isinstance(value, type_)),
-            None,
-        )
-
+        
         current_value = self.get(owner, key, None)
-        if current_value and type(current_value) is not type(default):
-            raise ValueError(
-                "Can't switch the type of pointer in database (current: {current_type}, requested: {requested_type})".format(
-                    current_type=type(current_value),
-                    requested_type=type(default)
+        if current_value is not None and default is not None:
+            if type(current_value) is not type(default):
+                raise ValueError(
+                    f"Cannot switch pointer type in database "
+                    f"(current: {type(current_value).__name__}, "
+                    f"requested: {type(default).__name__})"
                 )
-            )
 
-        if pointer_constructor is None:
-            raise ValueError(
-                "Pointer for type {type(value).__name__} is not implemented"
-            )
-
-        if item_type is not None:
-            if isinstance(value, list):
-                for item in self.get(owner, key, default):
+        if isinstance(value, list):
+            if item_type is not None:
+                for item in value:
                     if not isinstance(item, dict):
                         raise ValueError(
-                            "Item type can only be specified for dedicated keys and"
-                            " can't be mixed with other ones"
+                            "Item type can only be specified for dedicated keys "
+                            "and cannot be mixed with other ones"
                         )
-
                 return NamedTupleMiddlewareList(
-                    pointer_constructor(self, owner, key, default),
+                    PointerList(self, owner, key, default or []),
                     item_type,
                 )
-            if isinstance(value, dict):
-                for item in self.get(owner, key, default).values():
+            return PointerList(self, owner, key, default or [])
+
+        if isinstance(value, dict):
+            if item_type is not None:
+                for item in value.values():
                     if not isinstance(item, dict):
                         raise ValueError(
-                            "Item type can only be specified for dedicated keys and"
-                            " can't be mixed with other ones"
+                            "Item type can only be specified for dedicated keys "
+                            "and cannot be mixed with other ones"
                         )
-
                 return NamedTupleMiddlewareDict(
-                    pointer_constructor(self, owner, key, default),
+                    PointerDict(self, owner, key, default or {}),
                     item_type,
                 )
+            return PointerDict(self, owner, key, default or {})
 
-        return pointer_constructor(self, owner, key, default)
+        if isinstance(value, collections.abc.Hashable):
+            return value
+
+        raise ValueError(
+            f"Pointer for type {type(value).__name__} is not implemented"
+        )
