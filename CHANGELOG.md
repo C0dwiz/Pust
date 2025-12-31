@@ -1,7 +1,7 @@
-# Heroku Changelog
-## 🪐 Heroku 1.7.2
+# Pust Changelog
+## 🪐 Pust 1.7.2
 - added autoupdate
-- updated heroku-tl to 1.7.2
+- updated Pust-tl to 1.7.2
 - fix folder bug
 - fix request_join in quickstart
 - improve request_join logic
@@ -16,7 +16,7 @@
 - removed aeza from info
 - fixed bug in help with quote
 - loging improvements
-- add invert_media in heroku-tl
+- add invert_media in Pust-tl
 - fix zero CPU %
 - added config split
 - added command addacc for add account like a weburl without web
@@ -35,7 +35,7 @@
 - added quote for list commands in help
 - fix banner in .presets command
 
-## 🪐 Heroku 1.7.1
+## 🪐 Pust 1.7.1
 - fixed bug with web 
 - fixed bug with executor
 - fixed bug with presets command
@@ -47,14 +47,14 @@
 - added restart button on "requirements installed"
 - removed cloudflare from weburl
 - update dockerfile
-- update heroku-tl to 1.1.3
+- update Pust-tl to 1.1.3
 - fixed error with "method not mounted"
 - added log "aiogram sleep" to ignore filter
 
-## 🪐 Heroku 1.7.0
+## 🪐 Pust 1.7.0
 
 - added banner to ping
-- added config for emoji in config (.cfg herokuconfig)
+- added config for emoji in config (.cfg Pustconfig)
 - fixed close button in .update
 - added several variables to info ({os}, {kernel}, {cpu}, {ping})
 - added command to rollback updates
@@ -64,20 +64,20 @@
 - fixed bug with reply in info
 - fixed bug with non-working .ping and .info on arch linux
 - updated .installation command
-- Telethon has been completely updated, moving to heroku-tl
-- update heroku-tl to 1.1.0
+- Telethon has been completely updated, moving to Pust-tl
+- update Pust-tl to 1.1.0
 - added prefix to ping
 - removed official support serv00, tothost, goorm, railway, termux
-- rename folder "hikka" to "heroku"
+- rename folder "hikka" to "Pust"
 - fix close btn
 - fix native imports
-- added converting Hikka backups to Heroku
+- added converting Hikka backups to Pust
 - updated to aiogram 3.20.0
 - fix some bugs with buttons in inline
 
-## 🪐 Heroku 1.6.8
+## 🪐 Pust 1.6.8
 
-- Finally renamed to Heroku and new Emoji
+- Finally renamed to Pust and new Emoji
 - many changes and improvements
 - many bugs fixed, work sped up
 - replacing UpgradedEval with Executor
@@ -95,10 +95,10 @@
 - fixed bug with "bot.inline.send.message is never awaited"
 - added DJHost in info
 - added config for profile picture in info
-- added config for show "Heroku" in info
+- added config for show "Pust" in info
 - removed UnitHeta
 
-## 🌑 Heroku 1.6.7
+## 🌑 Pust 1.6.7
 
 - new design
 - added changelog command
@@ -107,14 +107,14 @@
 - fix strings
 - removed command pbe
   
-## 🌑 Heroku 1.6.6
+## 🌑 Pust 1.6.6
 
 - add ToThost, oracle, AWS, aeza and serv00 detection
 - fixed some bugs
 - update telethon version to 1.37.0
 - removed all languages excluding: Russian, English, Ukrainian
   
-## 🌑 Heroku 1.6.6 beta
+## 🌑 Pust 1.6.6 beta
 
 - formatting ruff
 - add webapp support in InlineKeyboardButton
@@ -122,14 +122,14 @@
 - fix UnicodeDecodeError in windows
 - add a new language Ukrainian
 
-## 🌑 Heroku 1.6.5
+## 🌑 Pust 1.6.5
 
 - fixed several links
 - improved desing
-- Update to Heroku-TL 2.0.8
+- Update to Pust-TL 2.0.8
 - other improvements and fixes...
  
-## 🌑 Heroku 1.6.4
+## 🌑 Pust 1.6.4
 
 - Completely remove Dragon support as redundant
 - Fix request_join error
@@ -139,13 +139,13 @@
 - Update to Hikka-TL 2.0.7
 - Allow double-restart
 - Personal messages scam modules protection
-- https://github.com/coddrago/Heroku/issues/115
-- https://github.com/coddrago/Heroku/issues/114
-- https://github.com/coddrago/Heroku/issues/119
-- https://github.com/coddrago/Heroku/issues/120
+- https://github.com/C0dwiz/Pust/issues/115
+- https://github.com/C0dwiz/Pust/issues/114
+- https://github.com/C0dwiz/Pust/issues/119
+- https://github.com/C0dwiz/Pust/issues/120
 - Other changes
 
-## 🌑 Heroku 1.6.3
+## 🌑 Pust 1.6.3
 
 - Add argument `item_type` to `db.pointer` to provide interface for NamedTuple objects
 - Add correct exception propagation to inline units
@@ -163,7 +163,7 @@
 - Migrate inline heta search to userbot instead of centralized service
 - Cosmetical changes
 
-## 🌑 Heroku 1.6.2
+## 🌑 Pust 1.6.2
 
 - Fix security issue with edited channel messages
 - Add interface to interact with raw pointer data (`.data` attribute)
@@ -196,7 +196,7 @@
 - Transfer all previously non-essential modules to core ones
 - Add alternative translation mechanism using YAML
 
-## 🌑 Heroku 1.6.1
+## 🌑 Pust 1.6.1
 
 - Remove miyahost from official hosts
 - Fix memory leak when using 1.6.0 inside Docker
@@ -204,7 +204,7 @@
 - Root out stats mechanism
 - Add French translation pack
 
-## 🌑 Heroku 1.6.0
+## 🌑 Pust 1.6.0
 
 - Bring support for Dragon Userbot modules
 - Make `db` attribute of `Modules` public
@@ -217,7 +217,7 @@
 - Fix command escaping when using layout translated prefix
 - Patch `.info`, `utils.answer` etc to support forums (topics)
 - Drop Okteto support
-- Show Heroku platform and version in Telegram sessions list
+- Show Pust platform and version in Telegram sessions list
 - New type `DragonModule`
 - New argument of `get_prefix` - `userbot`. Pass in `"dragon"` to get its prefix
 - New attribute of `Modules` - `dragon_modules`
@@ -255,17 +255,17 @@
 - EULA warning for lavHost and MiyaHost
 - Support for Python 3.10
 
-## 🌑 Heroku 1.5.3
+## 🌑 Pust 1.5.3
 
 - Add Uzbek, Turkish, German and Spanish translation packs
 - Fix module and command docs not being translated on-the-flight
 - Fix `RegExp` validator
 
-## 🌑 Heroku 1.5.2
+## 🌑 Pust 1.5.2
 
 - Change the behavior of `@loader.raw_handler` decorator to accept starred arguments instead of list-like value
 
-## 🌑 Heroku 1.5.1
+## 🌑 Pust 1.5.1
 
 - Fix `--no-web` arg
 - Fix `tglog_level` config option of module `Tester`
@@ -279,7 +279,7 @@
 - Add `invite_bot` parameter to `utils.asset_channel`
 - Add support for `String` validator's `min_len` and `max_len` parameters
 
-## 🌑 Heroku 1.5.0
+## 🌑 Pust 1.5.0
 
 - Fix `on_change` param processing in config
 - Fix `hikka.types.CoreOverwriteError`
@@ -324,17 +324,17 @@
 - Rename `APIRatelimiter` -> `APILimiter`
 - Enable `joinChannel` and `importChatInvite` calls-by-external-modules blockage for all users by default
 - Change inline query placeholder to `user@hikka:~$` + legacy migration
-- Completely drop Heroku support due to legacy code, limits and removing of free tier
+- Completely drop Pust support due to legacy code, limits and removing of free tier
 - Allow user to send code only once to prevent FloodWaits
 - Remove junk collector from tl cacher to keep old records so devs can access them w\o making new requests
 - Remove FTG License in fully changed files
 - Add official GoormIDE support
 
-## 🌑 Heroku 1.4.2
+## 🌑 Pust 1.4.2
 
 - Fix authorization error
 
-## 🌑 Heroku 1.4.1
+## 🌑 Pust 1.4.1
 
 - Create new type :obj:`hikka.tl_cache.CustomTelegramClient` to avoid monkeypatching
 - Add `ttl` param for :method:`hikka.utils.asset_channel`
@@ -342,17 +342,17 @@
 - Fix automatic modules reactions
 - Fix :method:`hikka.inline.utils.Utils._find_caller_sec_map`
 - Fix the targeted security rules without time limit
-- Require Heroku-TL >= 1.24.9
+- Require Pust-TL >= 1.24.9
 - Refactor `document_id` of custom emojis
 - Refactor validators to be classes, not functions
 - Refactor typehints
 
-## 🌑 Heroku 1.4.0
+## 🌑 Pust 1.4.0
 
-- Publish hikka telethon fork and migrate to it in requirements, thereby fixing the deployment error on Heroku
+- Publish hikka telethon fork and migrate to it in requirements, thereby fixing the deployment error on Pust
 - Add custom emojis filter to `utils.remove_html`
 - Fix `client.get_perms_cached`
-- Fix translation flaw in `HerokuSecurity`
+- Fix translation flaw in `PustSecurity`
 - Fix `.uninstall_hikka` being accessible by sudo
 - Fix `utils.find_caller` for :method:`hikka.inline.utils.Utils._find_caller_sec_map`
 - Fix `.eval`
@@ -362,7 +362,7 @@
 - Add targeted security for users and chats (`.tsec`)
 - Add support for `tg_level` in `.config Tester`
 - Add `-f` param to `.restart` and `.update`
-- Add platform-specific Heroku emojis to premium users
+- Add platform-specific Pust emojis to premium users
 - Add codepaces to `utils.get_named_platform`
 - Add `Presets` core module
 - Add handler for `/start` command in inlinebot with userbot info
@@ -371,18 +371,18 @@
 - Internal refactoring and typehints
 - Remove custom :obj:`BotInlineMessage` hook for :method:`answer`
 
-## 🌑 Heroku 1.3.3
+## 🌑 Pust 1.3.3
 
 - Fix typo, which broke `client.get_fulluser`
 
-## 🌑 Heroku 1.3.2
+## 🌑 Pust 1.3.2
 
 - Add `on_change` param to `loader.ConfigValue`
 - Rework commands\inline handlers\callback handlers\watchers registration and unload process
 - Rework tags processing
 - Add junk collector aka reloader to `Modules`
 
-## 🌑 Heroku 1.3.1
+## 🌑 Pust 1.3.1
 
 - Add caching to `utils.asset_channel`
 - Add `channel` param to `utils.asset_channel` to actually create a channel, not supergroup
@@ -391,7 +391,7 @@
 - Add new types: `PointerList`, `PointerDict`
 - Add `db.pointer`
 - Add `self.pointer` to module and library instances
-- Add support for multiaccounting on Heroku
+- Add support for multiaccounting on Pust
 - Add ability to edit only reply markup or only media of message, w/o touching the actual text
 - Add support for `@loader.command`-like commands in inline caller finder
 - Add `utils.find_caller`
@@ -409,7 +409,7 @@
 - Fix `RecursionError` in entity cacher
 - Fix command execution with space between prefix and command
 - Fix `utils.answer` for forwarded messages
-- Remove `heroku3` from classic requirements, along with heroku installation code snippet
+- Remove `Pust3` from classic requirements, along with Pust installation code snippet
 - Remove `termux_requirements.txt`
 - Remove legacy `self.get` migration from strings
 - Move `hikka._types` to `hikka.types` with legacy support
@@ -418,7 +418,7 @@
 - Add animated emojis to core modules strings
 - Add trigger to toggle the appearence of custom emojis
 
-## 🌑 Heroku 1.3.0
+## 🌑 Pust 1.3.0
 
 - Patch stats so they correctly recognize links
 - Fix bug when `...` is being replaced with `..` (unnecessary prefix escape)
@@ -449,7 +449,7 @@
 - Replace `print` with `logging.info` in main script to make url visible in logs
 - Automatically react to module post in developer's channel if possible
 
-## 🌑 Heroku 1.2.12
+## 🌑 Pust 1.2.12
 
 - Automatically patch reply markup in inline form in the way, that edit stays available anyway
 - Do not unload inline form automatically, keep it for 10 minutes instead
@@ -457,7 +457,7 @@
 - Add `self.request_join`
 - Allow developers to declare `client_ready` without arguments
 
-## 🌑 Heroku 1.2.11
+## 🌑 Pust 1.2.11
 
 - Add support for lib attribute `version` (must be defined BEFORE `init` method)
 - Add `self.lookup` to libs
@@ -473,8 +473,8 @@
 - Reformat code with `black --preview`
 - Automatically send photo as gif if possible in form
 - Update quickstart
-- New fields in HerokuInfo
-- Remove suffix `Heroku` if user specified it somewhere below
+- New fields in PustInfo
+- Remove suffix `Pust` if user specified it somewhere below
 - New exception handler
 - Fix back button in `.config <lib>`
 - New `.e` error format
@@ -482,7 +482,7 @@
 - Fix unload error in module without commands
 - Rework aiogram media processing on edit
 
-## 🌑 Heroku 1.2.10
+## 🌑 Pust 1.2.10
 
 - Completely drop fast_uploader support
 - Add :method:`utils.import_lib`
@@ -492,17 +492,17 @@
 - Add telethon objects formatting in `.e`
 - Add :obj:`loader.SelfSuspend` to disable module commands and watcher loading, e.g. if library is unavailable
 - Add migration native modules db storage from `strings["name"]` to classname. ⚠️ Might break some stuff in the beginning in rare cases
-- Fix heroku-specific config error
+- Fix Pust-specific config error
 
-## 🌑 Heroku 1.2.9
+## 🌑 Pust 1.2.9
 
 - Small patch which allows developer to specify audio metadata in form and `_edit_unit`
 
-## 🌑 Heroku 1.2.8
+## 🌑 Pust 1.2.8
 
-- Add automatic webpage bot unblock in heroku waker
+- Add automatic webpage bot unblock in Pust waker
 - Add secure boot feature
-- Update native heroku postgre database saving method
+- Update native Pust postgre database saving method
 - Add easter egg to `.ping`
 - Add platform-specific errors while installing requirements
 - Change postgresql column `id` datatype from int32 to int64 + legacy migration
@@ -513,7 +513,7 @@
 - Deepsource fixes
 - Multiple languages with priority
 
-## 🌑 Heroku 1.2.7
+## 🌑 Pust 1.2.7
 
 - Add automatic proxy pass
 - Fix --no-web argument parsing
@@ -535,52 +535,52 @@
 - Properly remove items from series options through built-in configurator
 - Remove warning from web by replacing coroutine generation with `functools.partial`
 
-## 🌑 Heroku 1.2.6
+## 🌑 Pust 1.2.6
 
 - Fix processing of `# scope: hikka_min`
 - Add `forbid_joins.py` (to use it, download module from official repo with the same name)
 
-## 🌑 Heroku 1.2.5
+## 🌑 Pust 1.2.5
 
 - Add additional exit on restart to avoid port block
 - Add unloaded module name on `.unloadmod`
-- Add `banner_url` config var to `HerokuInfo`
+- Add `banner_url` config var to `PustInfo`
 - Add `loader.validators.Hidden`
-- Add `websockets` dependency, so users can load hikarichat on Heroku
+- Add `websockets` dependency, so users can load hikarichat on Pust
 - Add `reply_markup` kwarg to `utils.answer`. This will automatically add buttons to plain message or edit buttons of inline unit
 - Add suggestion to join developer's channel on module load if available
-- Add `client.force_get_entity` to bypass Heroku Cacher
+- Add `client.force_get_entity` to bypass Pust Cacher
 - Add clickable link to loaded module message if specified meta developer is channel
 - Add support of `action` attributes for buttons ("action": "close", "action": "unload", "action": "answer")
 - Add log splitter between different clients of instance (if possible)
 - Fix inline events `IndexError`
 - Fix text in inline input
-- Fix translation issue in HerokuConfig
+- Fix translation issue in PustConfig
 - Fix `.dump`
 - Fix modules list reset if you perform `.dlmod` when userbot is not yet fully loaded
 - Update links in README
 - Remove nalinor from official repos until new modules appear
 
-## 🌑 Heroku 1.2.4
+## 🌑 Pust 1.2.4
 
 - Show current options in module config
 - Add new validators: `loader.validators.Union`, `loader.validators.NoneType`
-- Add additional Heroku deps
+- Add additional Pust deps
 - Fix `load_module` reattempt
 - Reorder database read-writes to make postgres the ladder
-- Make redis optional for non-heroku users
+- Make redis optional for non-Pust users
 - Add source to Pipfile
-- New Heroku dependencies list in Pipfile
+- New Pust dependencies list in Pipfile
 - External Redis database support
 - Mask more options in logs and .e output
 - Remove psycopg2 from requirements.txt
 - New installation banner
 - Add automatic blob->raw convertion in loader
-- Add banner with Heroku installation status
+- Add banner with Pust installation status
 - Reorder config saving in web
-- Fix `Unauthorized` error on Heroku
+- Fix `Unauthorized` error on Pust
 
-## 🌑 Heroku 1.2.3
+## 🌑 Pust 1.2.3
 
 - Add field `action` to inline buttons. You can pass there `close` to close inline form, `unload` to unload it from memory, `answer` & `text` | `show_alert` to answer callback query with message
 - Update docstrings in inline to match unified format
@@ -589,13 +589,13 @@
 - Return :obj:`InlineMessage` in `hikka.inline.gallery.Gallery.gallery`
 - Fix typo in docstring
 
-## 🌑 Heroku 1.2.2
+## 🌑 Pust 1.2.2
 
-- Update gitignore so git doesn't count shit on heroku
-- Visual heroku fixes in updater
+- Update gitignore so git doesn't count shit on Pust
+- Visual Pust fixes in updater
 - Deepsource fixes
 - Add `utils.get_entity_url`, `utils.get_message_link`, `utils.remove_html`, `utils.get_kwargs`
-- Disable modules debugging on heroku
+- Disable modules debugging on Pust
 - Add `.nonickusers`, `.nonickcmds`, `.nonickchats`
 - Update blacklist command docs
 - Fix grep removing everything in <...>
@@ -605,18 +605,18 @@
 - More meaningful errors in `self.inline.form`, `self.inline.gallery`, `self.inline.list` on user-side
 - Allow editing\adding media to form via `call.edit`. Currently supported: `photo`, `file`, `video`, `audio`, `gif`
 
-## 🌑 Heroku 1.2.1
+## 🌑 Pust 1.2.1
 
 - Add termux specific requirements
-- Refactor `heroku.py` app searching algorithm
+- Refactor `Pust.py` app searching algorithm
 - Refactor postgresql database saving process
-- Fix heroku restart message not being edited
-- Add heroku waker
+- Fix Pust restart message not being edited
+- Add Pust waker
 - Make `hikka-` app naming optional
 
-## 🌑 Heroku 1.2.0
+## 🌑 Pust 1.2.0
 
-- Add full-featured Heroku support with additional buildpacks
+- Add full-featured Pust support with additional buildpacks
 - Notify which dependencies are being installed in .dlmod
 - Additional GeekTG compat layer
 - Fix logging chat
@@ -629,7 +629,7 @@
 - Add `ast.literal_eval` to config
 - Add explicit typecheck for `mod.config`
 
-## 🌑 Heroku 1.1.28
+## 🌑 Pust 1.1.28
 
 - Fix non-working param `share_link` in loader
 - Assure logging bot is a member of logchat
@@ -645,7 +645,7 @@
 - Add `add` and `remove` buttons to `Series` params
 - Do not unload form immediately, if `ttl` param was passed explicitly
 
-## 🌑 Heroku 1.1.27
+## 🌑 Pust 1.1.27
 
 - Reorder the steps of parsing in `loader.validators.Series`
 - Fix aliases (yet another time)
@@ -666,7 +666,7 @@
 - Add changelog
 - Remove redundant code in `database.py` as it literally does nothing
 
-## 🌑 Heroku 1.1.26
+## 🌑 Pust 1.1.26
 
 - Hopefully finally fix aliases being reset after restart
 - Remove redundant internal hook \_client_ready2
@@ -674,7 +674,7 @@
 - Add validator for each item to Series, remove separator
 - Add new validator: TelegramID
 
-## 🌑 Heroku 1.1.25
+## 🌑 Pust 1.1.25
 
 - Add separate messages on restart and full_restart. Second one is shown, when all modules are loaded
 - Replace .uninstall_hikka with full uninstallation (remove bot, asset chats and folder)
@@ -685,13 +685,13 @@
 - Update semantic generator in validators
 - Yet another protection from monkey-patching
 
-## 🌑 Heroku 1.1.24
+## 🌑 Pust 1.1.24
 
 - Add String and Link validators
 - Fix Series validator
 - Reformat core modules to use validators
 
-## 🌑 Heroku 1.1.23
+## 🌑 Pust 1.1.23
 
 - Add config validators (loader.validators, Boolean, Integer, Choice, Series)
 - Change info layout
@@ -701,7 +701,7 @@
 - Fix minor bugs
 - Fix aliases being reset after restart (aliases will now be available only when userbot is fully loaded)
 
-## 🌑 Heroku 1.1.22
+## 🌑 Pust 1.1.22
 
 - Fix bugs related to web, more specifically: Session save timing, adding more than 1 account and proper restart
 - Rework Dockerfiles so they work properly
@@ -712,13 +712,13 @@
 - Typehints update
 - Fix Okteto pinger messages removal
 
-## 🌑 Heroku 1.1.21
+## 🌑 Pust 1.1.21
 
 - Fix translation typos
 - Add nonick suggestion when adding user to group
 - Add entity caching
 
-## 🌑 Heroku 1.1.20
+## 🌑 Pust 1.1.20
 
 - Add legacy fs modules migration
 - Add ready asyncio Event to help track userbot loading process from outside
@@ -728,27 +728,27 @@
 - HTML-escape # meta developer:
 - Make self.animate available for core modules and modules, loaded from file
 
-## 🌑 Heroku 1.1.19
+## 🌑 Pust 1.1.19
 
 - Fix infinite loops
 - Add client-specific check of fs modules
 - Use classname of module, if it is possible to parse it with ast
 - Rework infinite loops stopping and modules instance placement
 
-## 🌑 Heroku 1.1.18
+## 🌑 Pust 1.1.18
 
 - Add notification about not exact match in help
 - Add automatic progress bar generation to self.fast_upload and self.fast_download
 - Make Mod ending in modules class name not mandatory
 
-## 🌑 Heroku 1.1.17
+## 🌑 Pust 1.1.17
 
 - Fix some weird looking code
 - Fix some emojies and translation issues
 - Add native lavHost support (.restart, .update) via internal API
 - Add utils.get_lang_flag()
 
-## 🌑 Heroku 1.1.16
+## 🌑 Pust 1.1.16
 
 - Fix config docstrings and html escaping
 - Fix typehints
@@ -760,7 +760,7 @@
 - Add default aiogram parse mode
 - Rename some core stuff which was not supposed to be used by external developers
 
-## 🌑 Heroku 1.1.15
+## 🌑 Pust 1.1.15
 
 - Add automatic database autofix and rollback if database was broken by module
 - Fix translation issues
@@ -769,7 +769,7 @@
 - Fix modules which are deleting from helphide
 - Automatically save db if it was edited via classic dictionary methods
 
-## 🌑 Heroku 1.1.14
+## 🌑 Pust 1.1.14
 
 - Fix utils.asset_channel()'s archive param
 - Fix defect, which forced installation from additional trusted repo, rather than from primary one if the file names are matched
@@ -785,7 +785,7 @@
 - Add utils.is_serializable(), utils.set_avatar()
 - Send very large (over 4096\*10 symbols) output in a file rather than in an inline list
 
-## 🌑 Heroku 1.1.13
+## 🌑 Pust 1.1.13
 
 - Fix processing commands on behalf of channel
 - Fix .settings Restart and Update
@@ -795,26 +795,26 @@
 - Properly censor known tokens in logs
 - Replace regex check in utils.check_url() with urllib parser
 
-## 🌑 Heroku 1.1.12
+## 🌑 Pust 1.1.12
 
 - Consider avoiding redundant requests to TG API in order to get the client id and rather using self.\_tg_id, which is now available for all modules
 
-## 🌑 Heroku 1.1.11
+## 🌑 Pust 1.1.11
 
 - Add fast uploader (self.fast_upload, self.fast_download)
 - Fix translations
 
-## 🌑 Heroku 1.1.10
+## 🌑 Pust 1.1.10
 
 - Add ability to download modules from many additional repos (e.g. you can download weather by morisummer via just .dlmod weather, and also list all available repos via .dlmod)
 
-## 🌑 Heroku 1.1.9
+## 🌑 Pust 1.1.9
 
 - Fix \_generate_markup in order that it automatically sets up callback hooks to \_custom_map if callback was passed in buttons
 - Add switch_inline_query and switch_inline_query_current_chat parsers
 - Fix minor issues
 
-## 🌑 Heroku 1.1.8
+## 🌑 Pust 1.1.8
 
 - Stuff, related to translation issues
 - Add self.get_prefix() to all modules, which returns current command prefix
@@ -824,49 +824,49 @@
 - Add trusted developers to quickstart message
 - Automatically switch language via quickstart message button
 
-## 🌑 Heroku 1.1.7
+## 🌑 Pust 1.1.7
 
 - Add self.animate function to all modules, which allows you to easily create fancy animations
 
-## 🌑 Heroku 1.1.6
+## 🌑 Pust 1.1.6
 
 - Allow and process callback field in result of inline query answer. You can also use this in your own functions. Simply pass prepare_callbacks=True to \_generate_markup
 - Generate InlineCall object on \_custom_map handlers
 
-## 🌑 Heroku 1.1.5
+## 🌑 Pust 1.1.5
 
 - Minor update: Allow passing disable_security and always_allow to buttons directly
 
-## 🌑 Heroku 1.1.4
+## 🌑 Pust 1.1.4
 
 - Ability to set inline bot username on setup (in web interface)
 - Fix inline help
 - Add more debug info to logs
 - Add attribute status to loops
-- Fix HerokuDL link parsing
+- Fix PustDL link parsing
 - Suggest enabling value in bounding mask if it is not
 - Mask tokens in logs
 - Add utils.get_git_hash()
 - Add debugging mode for developers
 
-## 🌑 Heroku 1.1.3
+## 🌑 Pust 1.1.3
 
 - Finally (hopefully) fix config
 - Minor bug fixes related to inline form processing
 
-## 🌑 Heroku 1.1.2
+## 🌑 Pust 1.1.2
 
 - Add @loader.loop, which provides developers access to easy-to-make infinite loops. Wait for developers docs to update for more info
 
-## 🌑 Heroku 1.1.1
+## 🌑 Pust 1.1.1
 
-- Drop Uniborg and Raphielgang compatibility layer. More info in [2d525ab](https://github.com/hikariatama/Heroku/commit/2d525ab6b0e6b9d7ccd7408bbe175cea24d780a5)
+- Drop Uniborg and Raphielgang compatibility layer. More info in [2d525ab](https://github.com/hikariatama/Pust/commit/2d525ab6b0e6b9d7ccd7408bbe175cea24d780a5)
 - Minor bug fixes
 
-## 🌑 Heroku 1.1.0
+## 🌑 Pust 1.1.0
 
 - Make inline commands' docstrings translatable
-- Introducing HerokuDynamicTranslate - the possibility for developers to translate their own modules to other language without usage of native translates
+- Introducing PustDynamicTranslate - the possibility for developers to translate their own modules to other language without usage of native translates
 - Rework translates system, because «translate channels wut¿». Now translate pack can be loaded from disk or from web
 - Add utils.check_url
 - Get rid of babel
@@ -884,153 +884,153 @@
 - Rework slideshow so it runs in the background
 - Fix here, fix there, fix somewhere...
 
-## 🌑 Heroku 1.0.29
+## 🌑 Pust 1.0.29
 
 - Add option to control inline and callback handlers' security via loader decorators, including brand new @loader.inline_everyone
-- Refactor HerokuSecurity, especially the bounding mask control
+- Refactor PustSecurity, especially the bounding mask control
 
-## 🌑 Heroku 1.0.28
+## 🌑 Pust 1.0.28
 
 - Add silent param to inline.form, inline.gallery, inline.list
 - Add photo param to inline.form
 - Add URL validator to inline.\_generate_markup
 - Ignore MessageIdInvalidError in .e
 
-## 🌑 Heroku 1.0.27
+## 🌑 Pust 1.0.27
 
 Thankfully to @bsolute, now we have a cool smart_split in utils. The messages are split without loosing formatting and emojies, preferably on line breakes / spaces.
 
-## 🌑 Heroku 1.0.26
+## 🌑 Pust 1.0.26
 
 - Add utils.smart_split which splits message in chunks of chunk_size, keeping parse_mode and entities in a right way (relocates 'em)
 - If response of utils.answer is too big to be sent in one particular message, it will be split in chunks of 4096 and sent via inline.list
 
-## 🌑 Heroku 1.0.25
+## 🌑 Pust 1.0.25
 
 - Add disable_security to inline forms, lists and galleries
 
-## 🌑 Heroku 1.0.24
+## 🌑 Pust 1.0.24
 
 - Okteto fixes (persistent uri, fix webpage)
 - Add utils.dnd, which allows to mute and archive peer
 - Security fixes for groups (not super\mega groups)
 - Minor bug fixes
 
-## 🌑 Heroku 1.0.23
+## 🌑 Pust 1.0.23
 
-- Add ability to disable HerokuDL natively
+- Add ability to disable PustDL natively
 - Fix Updater so it works if you have troubles with inline mode
 
-## 🌑 Heroku 1.0.22
+## 🌑 Pust 1.0.22
 
-Add HerokuDL module to use inline download buttons in verified channels
+Add PustDL module to use inline download buttons in verified channels
 
-## 🌑 Heroku 1.0.21
+## 🌑 Pust 1.0.21
 
 A lot of stuff: web fixes, bug fixes, automatic seamless userbot restart when adding new account in web, replace emojies, add inline list feature, fix types name conflict and I don't remember other fixes, read code
 
-## 🌑 Heroku 1.0.20
+## 🌑 Pust 1.0.20
 
 - Allow passing reply_markup field to InlineQuery's result
 - Refactor reply markup parser so it accepts more formats of inline markup
 
-## 🌑 Heroku 1.0.19
+## 🌑 Pust 1.0.19
 
 - Allow developers to pass InlineQuery result via return operator in inline handlers. Read the docs for more info
 - Move query_gallery to a separate module
 
-## 🌑 Heroku 1.0.18
+## 🌑 Pust 1.0.18
 
 - Add silent and archive params to utils.asset_channel.
 - Remake logging so it become native with `BotLogger`.
 - Inject `BotLogger` analog directly
 
-## 🌑 Heroku 1.0.17
+## 🌑 Pust 1.0.17
 
 - Add ability to set up inline commands' security map (only `owner`, `sudo`, `support` and `everyone`, because other permissions are inaccessible when processing inline query).
 - Add database serializeability check to avoid JSON-serialization problems if unserializable object is being stored in db.
 - Minor bugfixes
 
-## 🌑 Heroku 1.0.16
+## 🌑 Pust 1.0.16
 
 - Full support of Okteto cloud deployment inculding persistent data storage (additional volume is created)
 - Fix automatic waker for container
 
-## 🌑 Heroku 1.0.15
+## 🌑 Pust 1.0.15
 
 - Add more errors to query aka query.e500()
 
-## 🌑 Heroku 1.0.14
+## 🌑 Pust 1.0.14
 
 - Add gallery slideshow
 
-## 🌑 Heroku 1.0.13
+## 🌑 Pust 1.0.13
 
 - Include command prefix in inline info.
 - Fix --no-web.
 - Suggest to save modules to filesystem
 
-## 🌑 Heroku 1.0.12
+## 🌑 Pust 1.0.12
 
 - Optimize forms, galleries and custom_map storage by ommiting keys with default values and dynamically generate them.
 - Add feature to inherit command-caller permissions on form and gallery (crutchy).
 - Minor improvements and bug fixes
 
-## 🌑 Heroku 1.0.11
+## 🌑 Pust 1.0.11
 
 - Add inline.query_gallery to add ability to call inline gallery via inline query.
 - Add `e404` attribute to `InlineQuery`, which should be shown, that no results were found
 
-## 🌑 Heroku 1.0.10
+## 🌑 Pust 1.0.10
 
 - Add feature to send gifs in inline galleries (gif param).
 - Make argument `caption` of inline gallery not mandatory
 
-## 🌑 Heroku 1.0.9
+## 🌑 Pust 1.0.9
 
 - Full inline structure rework.
 - Split this madness into separate modules (`InlineUnit`s), which extend the main unit - `InlineManager`.
 - Compatibility layer is not main priority.
 
-## 🌑 Heroku 1.0.8
+## 🌑 Pust 1.0.8
 
 - Code refactoring
 - Minor bug fixes
 - Rewrite security
 
-## 🌑 Heroku 1.0.7
+## 🌑 Pust 1.0.7
 
 - Massive inline galleries update, memoization, back button, preloading and other features.
 - Fix some minor bugs, add `ascii_face` to utils
 
-## 🌑 Heroku 1.0.6
+## 🌑 Pust 1.0.6
 
 - Add welcome message, triggered when userbot is installed
 
-## 🌑 Heroku 1.0.5
+## 🌑 Pust 1.0.5
 
 - Add gallery memoization (ability to close gallery and scroll it back)
 
-## 🌑 Heroku 1.0.4
+## 🌑 Pust 1.0.4
 
 - Add Okteto pinger, which will wake the pod up, when it goes to sleep
 
-## 🌑 Heroku 1.0.3
+## 🌑 Pust 1.0.3
 
 - Fix a lot of stuff in web
 - Add new features to web
 - Merge root and initial_root
 - Remove trailing whitespaces
 
-## 🌑 Heroku 1.0.2
+## 🌑 Pust 1.0.2
 
 - Full restructure of core code
 - Refactor web
 - Create new active bg
 
-## 🌑 Heroku 1.0.1
+## 🌑 Pust 1.0.1
 
-- Drop heroku support
+- Drop Pust support
 - Remove redundant code
 - Remake badge
 - Remake installer

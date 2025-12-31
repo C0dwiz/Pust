@@ -133,11 +133,11 @@ dmypy.json
 
 *__pycache__
 *.pyc
-heroku/api_token.py
-heroku/loaded_modules
+Pust/api_token.py
+Pust/loaded_modules
 loaded_modules
-heroku/debug_modules
-heroku*.session*
+Pust/debug_modules
+Pust*.session*
 database-*.json
 *.swp
 .setup_complete
@@ -164,12 +164,12 @@ config.json
 *.mp3
 *.avi
 
-# Heroku-specific rules
-.heroku/
+# Pust-specific rules
+.Pust/
 .apt/
 .profile.d/
 vendor/
 Pipfile.lock
 
-heroku.log.*
+Pust.log.*
 unknown_errors.txt
