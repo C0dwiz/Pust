@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -44,8 +44,8 @@ class Quickstart(loader.Module):
 
     async def client_ready(self):
         await self.request_join(
-            "Pust_talks", 
-            "Pust help is only available in this chat. By agreeing to join the chat, you agree to the Pust federation rules and if you violate them, you will be permanently banned."
+            "Pust_talks",
+            "Pust help is only available in this chat. By agreeing to join the chat, you agree to the Pust federation rules and if you violate them, you will be permanently banned.",
         )
 
         self.mark = lambda: [
@@ -69,10 +69,7 @@ class Quickstart(loader.Module):
         self.text = (
             lambda: self.strings("base")
             + (
-                "\n"
-                + (
-                    (self.strings("lavhost") if "LAVHOST" in os.environ else "")
-                )
+                "\n" + (self.strings("lavhost") if "LAVHOST" in os.environ else "")
             ).rstrip()
         )
 

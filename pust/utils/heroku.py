@@ -1,6 +1,6 @@
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -12,10 +12,11 @@
 
 import logging
 import os
-import Pusttl
+import telethon
 
-parser = Pusttl.utils.sanitize_parse_mode("html")
+parser = telethon.utils.sanitize_parse_mode("html")
 logger = logging.getLogger(__name__)
+
 
 def get_version_raw() -> str:
     """
@@ -41,6 +42,7 @@ def get_dir(mod: str) -> str:
     :param mod: Module's `__file__` to get directory of
     :return: Directory of given module
     """
-    return(os.getcwd() + "/Pust")
+    return os.getcwd() + "/Pust"
+
 
 version = get_version_raw

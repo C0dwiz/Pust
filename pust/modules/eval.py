@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -25,10 +25,10 @@ import tempfile
 import typing
 from types import ModuleType
 
-import Pusttl
-from Pusttl.errors.rpcerrorlist import MessageIdInvalidError
-from Pusttl.sessions import StringSession
-from Pusttl.tl.types import Message
+import telethon
+from telethon.errors.rpcerrorlist import MessageIdInvalidError
+from telethon.sessions import StringSession
+from telethon.tl.types import Message
 from meval import meval
 from io import StringIO
 
@@ -206,15 +206,23 @@ class Evaluator(loader.Module):
                     "4985626654563894116",
                     "python",
                     utils.escape_html(utils.get_args_raw(message)),
-                ) + (self.strings["eval_result"].format(
-                    "python",
-                     utils.escape_html(self.censor(str(result)))
-                    ) if result or not print_output else ""
-                ) + (self.strings["print_outp"].format(
-                    "python",
-                    print_output,
-                    utils.escape_html(self.censor(print_output))
-                    ) if print_output else ""),
+                )
+                + (
+                    self.strings["eval_result"].format(
+                        "python", utils.escape_html(self.censor(str(result)))
+                    )
+                    if result or not print_output
+                    else ""
+                )
+                + (
+                    self.strings["print_outp"].format(
+                        "python",
+                        print_output,
+                        utils.escape_html(self.censor(print_output)),
+                    )
+                    if print_output
+                    else ""
+                ),
             )
 
     @loader.command()
@@ -457,19 +465,19 @@ class Evaluator(loader.Module):
         ret = ret.replace(str(self._client.Pust_me.phone), "&lt;phone&gt;")
 
         if redis := os.environ.get("REDIS_URL") or main.get_config_key("redis_uri"):
-            ret = ret.replace(redis, f'redis://{"*" * 26}')
+            ret = ret.replace(redis, f"redis://{'*' * 26}")
 
         if db := os.environ.get("DATABASE_URL") or main.get_config_key("db_uri"):
-            ret = ret.replace(db, f'postgresql://{"*" * 26}')
+            ret = ret.replace(db, f"postgresql://{'*' * 26}")
 
         if btoken := self._db.get("Pust.inline", "bot_token", False):
             ret = ret.replace(
                 btoken,
-                f'{btoken.split(":")[0]}:{"*" * 26}',
+                f"{btoken.split(':')[0]}:{'*' * 26}",
             )
 
         if htoken := self.lookup("loader").get("token", False):
-            ret = ret.replace(htoken, f'eugeo_{"*" * 26}')
+            ret = ret.replace(htoken, f"eugeo_{'*' * 26}")
 
         ret = ret.replace(
             StringSession.save,
@@ -485,13 +493,13 @@ class Evaluator(loader.Module):
             "client": self._client,
             "reply": reply,
             "r": reply,
-            **self.get_sub(Pusttl.tl.types),
-            **self.get_sub(Pusttl.tl.functions),
+            **self.get_sub(telethon.tl.types),
+            **self.get_sub(telethon.tl.functions),
             "event": message,
             "chat": message.to_id,
-            "Pusttl": Pusttl,
-            "telethon": Pusttl,
-            "hikkatl": Pusttl,
+            "telethon": telethon,
+            "telethon": telethon,
+            "hikkatl": telethon,
             "utils": utils,
             "main": main,
             "loader": loader,
@@ -500,8 +508,8 @@ class Evaluator(loader.Module):
             "lookup": self.lookup,
             "self": self,
             "db": self.db,
-            **self.get_sub(Pusttl.tl.types),
-            **self.get_sub(Pusttl.tl.functions),
+            **self.get_sub(telethon.tl.types),
+            **self.get_sub(telethon.tl.functions),
         }
 
     def get_sub(self, obj: typing.Any, _depth: int = 1) -> dict:
@@ -523,11 +531,11 @@ class Evaluator(loader.Module):
                             lambda x: x[0][0] != "_"
                             and isinstance(x[1], ModuleType)
                             and x[1] != obj
-                            and x[1].__package__.rsplit(".", _depth)[0] == "Pusttl.tl",
+                            and x[1].__package__.rsplit(".", _depth)[0]
+                            == "telethon.tl",
                             obj.__dict__.items(),
                         )
                     ]
                 )
             ),
         }
-        

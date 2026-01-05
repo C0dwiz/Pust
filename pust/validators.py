@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pustserbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -21,7 +21,7 @@ import re
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import grapheme
-from emoji import get_emoji_unicode_dict
+import emoji
 
 from . import utils
 from .translations import SUPPORTED_LANGUAGES, translator
@@ -29,7 +29,7 @@ from .translations import SUPPORTED_LANGUAGES, translator
 ConfigAllowedTypes = Union[Tuple, List, str, int, bool, None]
 
 
-ALLOWED_EMOJIS = frozenset(get_emoji_unicode_dict("en").values())
+ALLOWED_EMOJIS = frozenset(emoji.EMOJI_DATA.keys())
 
 
 class ValidationError(Exception):

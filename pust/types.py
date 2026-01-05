@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pustserbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -32,14 +32,15 @@ import re
 import sys
 import time
 from dataclasses import dataclass, field
+from enum import IntEnum, StrEnum
 from importlib.abc import SourceLoader
 from types import CodeType
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Protocol, TypeAlias, Union
 
 import requests
-from Pust.hints import EntityLike
-from Pust.tl.functions.account import UpdateNotifySettingsRequest
-from Pust.tl.types import (
+from telethon.hints import EntityLike
+from telethon.tl.functions.account import UpdateNotifySettingsRequest
+from telethon.tl.types import (
     Channel,
     ChannelForbidden,
     ChannelFull,
@@ -72,7 +73,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "JSONSerializable",
-    "PustplyMarkup",
+    "PustReplyMarkup",
     "ListLike",
     "Command",
     "StringLoader",
@@ -107,23 +108,93 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-# Type aliases
-JSONSerializable = Union[str, int, float, bool, list, dict, None]
-PustplyMarkup = Union[list[list[dict]], list[dict], dict]
-ListLike = Union[list, set, tuple]
-Command = Callable[..., Any]  # Awaitable[Any] будет проверяться динамически
+
+from typing import TYPE_CHECKING  # noqa: E402
+
+if TYPE_CHECKING:
+    JSONSerializable = str | int | float | bool | list | dict | None
+    PustReplyMarkup = list[list[dict]] | list[dict] | dict
+    ListLike = list | set | tuple
+    Command = Callable[..., Any]
+else:
+    JSONSerializable = Union[str, int, float, bool, list, dict, None]
+    PustReplyMarkup = Union[list[list[dict]], list[dict], dict]
+    ListLike = Union[list, set, tuple]
+    Command = Callable[..., Any]
+
+
+class ModuleType(StrEnum):
+    """Module type enumeration"""
+
+    CORE = "core"
+    USER = "user"
+    SYSTEM = "system"
+    INLINE = "inline"
+
+
+class SecurityLevel(IntEnum):
+    """Security level enumeration"""
+
+    OWNER = 1 << 0
+    SUDO = 1 << 1
+    SUPPORT = 1 << 2
+    GROUP_OWNER = 1 << 3
+    GROUP_ADMIN_ADD_ADMINS = 1 << 4
+    GROUP_ADMIN_CHANGE_INFO = 1 << 5
+    GROUP_ADMIN_BAN_USERS = 1 << 6
+    GROUP_ADMIN_DELETE_MESSAGES = 1 << 7
+    GROUP_ADMIN_PIN_MESSAGES = 1 << 8
+    GROUP_ADMIN_INVITE_USERS = 1 << 9
+    GROUP_ADMIN = 1 << 10
+    GROUP_MEMBER = 1 << 11
+    PM = 1 << 12
+    EVERYONE = 1 << 13
+
+
+class LoadStatus(StrEnum):
+    """Module load status enumeration"""
+
+    LOADING = "loading"
+    LOADED = "loaded"
+    UNLOADING = "unloading"
+    UNLOADED = "unloaded"
+    ERROR = "error"
+
+
+class AsyncCommand(Protocol):
+    """Protocol for async commands"""
+
+    async def __call__(self, message: Message) -> Any: ...
+
+
+class SyncCommand(Protocol):
+    """Protocol for sync commands"""
+
+    def __call__(self, message: Message) -> Any: ...
+
+
+class ModuleLike(Protocol):
+    """Protocol for module-like objects"""
+
+    name: str
+    strings: dict[str, str]
+    commands: dict[str, Command]
+
+    async def load(self) -> None: ...
+    async def unload(self) -> None: ...
 
 
 class StringLoader(SourceLoader):
     """Load a Python module from string data"""
 
     def __init__(self, data: str | bytes, origin: str) -> None:
-        if isinstance(data, str):
-            self.data: bytes = data.encode("utf-8")
-        elif isinstance(data, bytes):
-            self.data = data
-        else:
-            raise TypeError(f"Expected str or bytes, got {type(data).__name__}")
+        match data:
+            case str():
+                self.data: bytes = data.encode("utf-8")
+            case bytes():
+                self.data = data
+            case _:
+                raise TypeError(f"Expected str or bytes, got {type(data).__name__}")
 
         self.origin = origin
 
@@ -469,7 +540,6 @@ class Module:
         if not isinstance(channel, Channel):
             raise TypeError("`peer` field must be a channel")
 
-        # Refresh channel info
         if getattr(channel, "left", True):
             try:
                 channel = await self.client.force_get_entity(peer)
@@ -591,7 +661,6 @@ class Module:
         except Exception as e:
             _raise(e)
 
-        # Check minimum version requirement
         if re.search(r"# ?scope: ?Pustin", code):
             match = re.search(r"# ?scope: ?Pustin ((\d+\.){2}\d+)", code)
             if match:
@@ -599,8 +668,7 @@ class Module:
                 if version.__version__ < ver:
                     _raise(
                         RuntimeError(
-                            f"Library requires Pustersion "
-                            f"{'{}.{}.{}'.format(*ver)}+"
+                            f"Library requires Pustersion {'{}.{}.{}'.format(*ver)}+"
                         )
                     )
 
@@ -623,7 +691,6 @@ class Module:
                 e.name,
             )
 
-            # Extract requirements
             try:
                 requirements_match = VALID_PIP_PACKAGES.search(code)
                 if requirements_match:
@@ -675,7 +742,6 @@ class Module:
                 _did_requirements=True,
             )
 
-        # Find Library class
         lib_obj = None
         for value in vars(instance).values():
             if inspect.isclass(value) and issubclass(value, Library):
@@ -693,7 +759,6 @@ class Module:
                 )
             )
 
-        # Send statistics if enabled
         if (
             all(
                 line.replace(" ", "") != "#scope:no_stats" for line in code.splitlines()
@@ -708,13 +773,11 @@ class Module:
         lib_obj.allmodules = self.allmodules
         lib_obj.internal_init()
 
-        # Check for existing library with same name
         for old_lib in self.allmodules.libraries:
             if old_lib.name == lib_obj.name:
                 old_version = getattr(old_lib, "version", None)
                 new_version = getattr(lib_obj, "version", None)
 
-                # If versions not defined or old version >= new version, use old
                 if (not old_version and not new_version) or (
                     isinstance(old_version, tuple)
                     and isinstance(new_version, tuple)
@@ -723,7 +786,6 @@ class Module:
                     logger.debug("Using existing instance of library %s", old_lib.name)
                     return old_lib
 
-        # Initialize library
         if hasattr(lib_obj, "init"):
             if not callable(lib_obj.init):
                 _raise(ValueError("Library init() must be callable"))
@@ -733,7 +795,6 @@ class Module:
             except Exception as e:
                 _raise(RuntimeError(f"Library init() failed: {e}"))
 
-        # Load configuration
         if hasattr(lib_obj, "config"):
             if not isinstance(lib_obj.config, LibraryConfig):
                 _raise(
@@ -758,13 +819,11 @@ class Module:
                 except Exception as e:
                     logger.warning("Failed to set config %s: %s", conf, e)
 
-        # Load strings
         if hasattr(lib_obj, "strings"):
             lib_obj.strings = Strings(lib_obj, getattr(self, "translator", None))
 
         lib_obj.translator = getattr(self, "translator", None)
 
-        # Replace existing library if needed
         for old_lib in self.allmodules.libraries:
             if old_lib.name == lib_obj.name:
                 if hasattr(old_lib, "on_lib_update") and callable(
@@ -779,7 +838,6 @@ class Module:
                 )
                 return lib_obj
 
-        # Add to libraries list
         self.allmodules.libraries.append(lib_obj)
         return lib_obj
 
@@ -901,10 +959,8 @@ class ModuleConfig(dict):
 
     def __init__(self, *entries: Union[str, "ConfigValue"]) -> None:
         if all(isinstance(entry, ConfigValue) for entry in entries):
-            # New format: ConfigValue objects
             self._config = {config.option: config for config in entries}
         else:
-            # Legacy format: alternating key, default, docstring
             keys = []
             values = []
             defaults = []
@@ -934,7 +990,6 @@ class ModuleConfig(dict):
 
         if callable(ret):
             try:
-                # For compatibility with Hikka
                 ret = ret(message)
             except Exception:
                 ret = ret()
@@ -1036,24 +1091,20 @@ class ConfigValue:
         ignore_validation: bool = False,
     ) -> None:
         if key == "value":
-            # Try to parse string values
             if isinstance(value, str):
                 try:
                     value = ast.literal_eval(value)
                 except (ValueError, SyntaxError):
                     pass
 
-            # Convert collections to list for JSON compatibility
             if isinstance(value, (set, tuple)):
                 value = list(value)
 
-            # Clean string lists
             if isinstance(value, list):
                 value = [
                     item.strip() if isinstance(item, str) else item for item in value
                 ]
 
-            # Apply validator
             if self.validator is not None and value is not None:
                 from . import validators
 
@@ -1071,7 +1122,6 @@ class ConfigValue:
                     )
                     value = self.default
 
-            # Handle None values based on validator type
             if value is None and self.validator is not None:
                 defaults = {
                     "String": "",
@@ -1089,12 +1139,10 @@ class ConfigValue:
                     )
                     value = defaults[validator_id]
 
-            # Mark for saving
             self._save_marker = True
 
         object.__setattr__(self, key, value)
 
-        # Trigger on_change callback
         if key == "value" and not ignore_validation and callable(self.on_change):
             if inspect.iscoroutinefunction(self.on_change):
                 asyncio.ensure_future(wrap(self.on_change))
@@ -1123,7 +1171,6 @@ def _get_members(
     result = {}
 
     for method_name in dir(mod):
-        # Skip properties
         if isinstance(getattr(type(mod), method_name, None), property):
             continue
 
@@ -1131,14 +1178,11 @@ def _get_members(
         if not callable(method):
             continue
 
-        # Check suffix match
         suffix_match = method_name == ending if strict else method_name.endswith(ending)
 
-        # Check attribute
         attr_match = attribute and getattr(method, attribute, False)
 
         if suffix_match or attr_match:
-            # Clean method name
             if suffix_match:
                 clean_name = (
                     method_name.rsplit(ending, 1)[0] if not strict else method_name

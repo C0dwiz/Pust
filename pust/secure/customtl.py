@@ -1,4 +1,3 @@
-
 # SPDX-License-Identifier: GNU AGPL v3.0
 #
 # This file is a part of Pust Userbot.
@@ -9,12 +8,12 @@ import asyncio
 import logging
 import time
 
-from Pusttl.errors import InvalidBufferError, SecurityError
-from Pusttl.extensions import BinaryReader
-from Pusttl.network.connection import ConnectionTcpFull as ConnectionTcpFullOrig
-from Pusttl.network.mtprotostate import MTProtoState as MTProtoStateOrig
-from Pusttl.tl.core import TLMessage
-from Pusttl.tl.types import BadMsgNotification, BadServerSalt
+from telethon.errors import InvalidBufferError, SecurityError
+from telethon.extensions import BinaryReader
+from telethon.network.connection import ConnectionTcpFull as ConnectionTcpFullOrig
+from telethon.network.mtprotostate import MTProtoState as MTProtoStateOrig
+from telethon.tl.core import TLMessage
+from telethon.tl.types import BadMsgNotification, BadServerSalt
 
 MSG_TOO_NEW_DELTA = 30
 MSG_TOO_OLD_DELTA = 300

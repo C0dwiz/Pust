@@ -1,4 +1,3 @@
-
 # SPDX-License-Identifier: GNU AGPL v3.0
 #
 # This file is a part of Pust Userbot.
@@ -13,17 +12,24 @@ import re
 
 logger = logging.getLogger(__name__)
 
-class SSHTunnel():
+
+class SSHTunnel:
     def __init__(
         self,
         port: int,
         change_url_callback: typing.Callable[[str], None] = None,
     ):
-        #TODO: select ssh servers?
+        # TODO: select ssh servers?
         self.ssh_commands = [
-            (f"ssh -o StrictHostKeyChecking=no -R 80:127.0.0.1:{port} serveo.net -T -n", r"https:\/\/(\S*serveo\.net\S*)"),
-            (f"ssh -o StrictHostKeyChecking=no -R 80:127.0.0.1:{port} nokey@localhost.run", r"https:\/\/(\S*lhr\.life\S*)"),
-            ]
+            (
+                f"ssh -o StrictHostKeyChecking=no -R 80:127.0.0.1:{port} serveo.net -T -n",
+                r"https:\/\/(\S*serveo\.net\S*)",
+            ),
+            (
+                f"ssh -o StrictHostKeyChecking=no -R 80:127.0.0.1:{port} nokey@localhost.run",
+                r"https:\/\/(\S*lhr\.life\S*)",
+            ),
+        ]
         self._change_url_callback = change_url_callback
         self._tunnel_url = None
         self._url_available = asyncio.Event()
@@ -70,8 +76,12 @@ class SSHTunnel():
             return
         try:
             while self.current_command_index < len(self.ssh_commands):
-                ssh_command, regex_pattern = self.ssh_commands[self.current_command_index]
-                logger.debug(f"Attempting SSH command: {ssh_command} with pattern: {regex_pattern}")
+                ssh_command, regex_pattern = self.ssh_commands[
+                    self.current_command_index
+                ]
+                logger.debug(
+                    f"Attempting SSH command: {ssh_command} with pattern: {regex_pattern}"
+                )
                 try:
                     command_list = ssh_command.split()
                     self.process = await asyncio.create_subprocess_exec(
@@ -81,21 +91,29 @@ class SSHTunnel():
                     )
 
                     logger.debug(f"SSH tunnel started with PID: {self.process.pid}")
-                    asyncio.create_task(self._read_stream_and_process(self.process.stdout, regex_pattern))
-                    
+                    asyncio.create_task(
+                        self._read_stream_and_process(
+                            self.process.stdout, regex_pattern
+                        )
+                    )
+
                     await self.process.wait()
-                    
+
                     if self._tunnel_url is None:
-                        logger.warning("SSH tunnel disconnected without providing a URL.")
+                        logger.warning(
+                            "SSH tunnel disconnected without providing a URL."
+                        )
                     else:
-                        logger.info("SSH tunnel disconnected, but URL was obtained. Exiting SSH Tunnel attempts.")
+                        logger.info(
+                            "SSH tunnel disconnected, but URL was obtained. Exiting SSH Tunnel attempts."
+                        )
                         return
 
                 except Exception as e:
                     logger.error(
                         f"Failed to start SSH tunnel with command: {ssh_command}. Error: {e}"
                     )
-                    
+
                 finally:
                     if self.process:
                         self.process = None

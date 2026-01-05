@@ -34,6 +34,7 @@ import inspect
 import logging
 import os
 import subprocess
+from enum import StrEnum
 
 import aiohttp_jinja2
 import jinja2
@@ -45,6 +46,25 @@ from ..tl_cache import CustomTelegramClient
 from . import proxypass, root
 
 logger = logging.getLogger(__name__)
+
+
+# Enums for better type safety
+class WebStatus(StrEnum):
+    """Web status enumeration"""
+
+    INITIALIZING = "initializing"
+    RUNNING = "running"
+    STOPPED = "stopped"
+    ERROR = "error"
+
+
+class ProxyType(StrEnum):
+    """Proxy type enumeration"""
+
+    NONE = "none"
+    LAVHOST = "lavhost"
+    CUSTOM = "custom"
+    DOCKER = "docker"
 
 
 class Web(root.Web):
@@ -80,7 +100,8 @@ class Web(root.Web):
 
             self.ready.set()
 
-    def get_url(self, proxy_pass: bool) -> str:
+    async def get_url(self, proxy_pass: bool) -> str:
+        """Get web interface URL based on environment and proxy settings"""
         url = None
 
         if all(option in os.environ for option in {"LAVHOST", "USER", "SERVER"}):
@@ -88,22 +109,24 @@ class Web(root.Web):
 
         if proxy_pass:
             with contextlib.suppress(Exception):
-                url = self.proxypasser.get_url(timeout=10)
+                url = await self.proxypasser.get_url(timeout=10)
 
         if not url:
-            ip = (
-                "127.0.0.1"
-                if "DOCKER" not in os.environ
-                else subprocess.run(
-                    ["hostname", "-i"],
-                    stdout=subprocess.PIPE,
-                    check=True,
-                )
-                .stdout.decode("utf-8")
-                .strip()
-            )
+            match os.environ.get("DOCKER"):
+                case "1" | "true" | "True":
+                    ip = (
+                        subprocess.run(
+                            ["hostname", "-i"],
+                            stdout=subprocess.PIPE,
+                            check=True,
+                        )
+                        .stdout.decode("utf-8")
+                        .strip()
+                    )
+                case _:
+                    ip = "127.0.0.1"
 
-            url = "http://{ip}:{self.port}"
+            url = f"http://{ip}:{self.port}"
 
         self.url = url
         return url
@@ -116,10 +139,11 @@ class Web(root.Web):
         self.proxypasser = proxypass.ProxyPasser(port=self.port)
         await site.start()
 
-        await self.get_url(proxy_pass)
+        self.url = await self.get_url(proxy_pass)
 
         self.running.set()
         print(f"Pust Userbot Web Interface running on {self.port}")
+        print(f"🔗 Web interface available at: {self.url}")
 
     async def stop(self):
         await self.runner.shutdown()

@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -24,8 +24,8 @@ import random
 from contextlib import suppress
 from typing import Optional, Tuple
 
-from Pusttl.errors.rpcerrorlist import YouBlockedUserError
-from Pusttl.tl.functions.contacts import UnblockRequest
+from telethon.errors.rpcerrorlist import YouBlockedUserError
+from telethon.tl.functions.contacts import UnblockRequest
 
 from .. import utils
 from .. import main

@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -25,8 +25,13 @@ import logging
 import os
 import re
 import typing
+import time
 from copy import deepcopy
 from urllib.parse import urlparse
+from enum import StrEnum
+from typing import Any, Dict, List, Optional, Callable
+from dataclasses import dataclass
+from functools import wraps
 
 from aiogram.types import (
     CallbackQuery,
@@ -197,12 +202,10 @@ class Utils(InlineUnit):
                         line += [
                             InlineKeyboardButton(
                                 text=str(button["text"]),
-                                copy_text=CopyTextButton(
-                                    text=button["copy"]
-                                )
+                                copy_text=CopyTextButton(text=button["copy"]),
                             )
                         ]
-                        
+
                     elif "switch_inline_query_current_chat" in button:
                         line += [
                             InlineKeyboardButton(
@@ -245,7 +248,10 @@ class Utils(InlineUnit):
     generate_markup = _generate_markup
 
     async def _close_unit_handler(self, call: InlineCall):
-        return await self._client.delete_messages(call._units.get(call.unit_id).get('chat'), call._units.get(call.unit_id).get('message_id'))
+        return await self._client.delete_messages(
+            call._units.get(call.unit_id).get("chat"),
+            call._units.get(call.unit_id).get("message_id"),
+        )
 
     async def _unload_unit_handler(self, call: InlineCall):
         await call.unload()
@@ -515,11 +521,11 @@ class Utils(InlineUnit):
                 else:
                     return True
             except TelegramAPIError:
-                if True: # TODO "" in e.message
+                if True:  # TODO "" in e.message
                     if query:
                         with contextlib.suppress(Exception):
                             await query.answer()
-                elif True: # TODO "" in e.message
+                elif True:  # TODO "" in e.message
                     with contextlib.suppress(Exception):
                         await query.answer(
                             "I should have edited some message, but it is deleted :("
@@ -530,7 +536,6 @@ class Utils(InlineUnit):
                 logger.info("Sleeping %ss on aiogram FloodWait...", e.retry_after)
                 await asyncio.sleep(e.retry_after)
                 return await self._edit_unit(**utils.get_kwargs())
-                
 
                 return False
             else:
@@ -555,7 +560,7 @@ class Utils(InlineUnit):
             await asyncio.sleep(e.retry_after)
             return await self._edit_unit(**utils.get_kwargs())
         except TelegramAPIError:
-            if True: # TODO
+            if True:  # TODO
                 with contextlib.suppress(Exception):
                     await query.answer(
                         "I should have edited some message, but it is deleted :("
@@ -595,7 +600,10 @@ class Utils(InlineUnit):
             unit_id = call.unit_id
 
         try:
-            await self._client.delete_messages(call._units.get(unit_id).get('chat'), call._units.get(unit_id).get('message_id'))
+            await self._client.delete_messages(
+                call._units.get(unit_id).get("chat"),
+                call._units.get(unit_id).get("message_id"),
+            )
         except Exception:
             return False
 
@@ -782,3 +790,479 @@ class Utils(InlineUnit):
             return None
 
         return buttons
+
+
+# Modern inline utilities with Python 3.12+ features
+class ButtonType(StrEnum):
+    """Button type enumeration"""
+
+    CALLBACK = "callback"
+    URL = "url"
+    INPUT = "input"
+    DATA = "data"
+    ACTION = "action"
+    COPY = "copy"
+    WEB_APP = "web_app"
+    SWITCH_INLINE = "switch_inline"
+    GAME = "game"
+    PAY = "pay"
+
+
+class ButtonStyle(StrEnum):
+    """Button style enumeration"""
+
+    DEFAULT = "default"
+    PRIMARY = "primary"
+    SECONDARY = "secondary"
+    DANGER = "danger"
+    SUCCESS = "success"
+    POSITIVE = "positive"
+    NEGATIVE = "negative"
+
+
+@dataclass
+class EnhancedButtonConfig:
+    """Enhanced button configuration with Python 3.12+ features"""
+
+    text: str
+    button_type: ButtonType
+    style: ButtonStyle = ButtonStyle.DEFAULT
+    callback_data: Optional[str] = None
+    url: Optional[str] = None
+    input_field: Optional[str] = None
+    input_placeholder: Optional[str] = None
+    input_type: Optional[str] = None
+    data: Optional[str] = None
+    action: Optional[str] = None
+    copy_text: Optional[str] = None
+    web_app_url: Optional[str] = None
+    switch_inline_query: Optional[str] = None
+    switch_inline_current_chat: Optional[bool] = None
+    callback_game_short_name: Optional[str] = None
+    pay_amount: Optional[int] = None
+    pay_currency: Optional[str] = None
+    icon: Optional[str] = None
+    tooltip: Optional[str] = None
+    disabled: bool = False
+    user_id: Optional[int] = None
+    request_users: Optional[List[int]] = None
+    request_chat: Optional[int] = None
+    request_location: bool = False
+    request_contact: bool = False
+    request_poll: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format"""
+        result: Dict[str, Any] = {"text": self.text}
+
+        match self.button_type:
+            case ButtonType.CALLBACK:
+                if self.callback_data:
+                    result["callback"] = self.callback_data
+            case ButtonType.URL:
+                if self.url:
+                    result["url"] = self.url
+            case ButtonType.INPUT:
+                if self.input_field:
+                    result["input"] = self.input_field
+                if self.input_placeholder:
+                    result["placeholder"] = self.input_placeholder
+                if self.input_type:
+                    result["field_type"] = self.input_type
+            case ButtonType.DATA:
+                if self.data:
+                    result["data"] = self.data
+            case ButtonType.ACTION:
+                if self.action:
+                    result["action"] = self.action
+            case ButtonType.COPY:
+                if self.copy_text:
+                    result["copy"] = self.copy_text
+            case ButtonType.WEB_APP:
+                if self.web_app_url:
+                    result["web_app"] = WebAppInfo(url=self.web_app_url)
+            case ButtonType.SWITCH_INLINE:
+                if self.switch_inline_query:
+                    result["switch_inline_query"] = self.switch_inline_query
+                if self.switch_inline_current_chat is not None:
+                    result["switch_inline_current_chat"] = (
+                        self.switch_inline_current_chat
+                    )
+            case ButtonType.GAME:
+                if self.callback_game_short_name:
+                    result["callback_game"] = self.callback_game_short_name
+            case ButtonType.PAY:
+                if self.pay_amount and self.pay_currency:
+                    result["pay"] = f"{self.pay_amount} {self.pay_currency}"
+
+        # Add optional fields
+        if self.icon:
+            result["icon"] = self.icon
+        if self.tooltip:
+            result["tooltip"] = self.tooltip
+        if self.disabled:
+            result["disabled"] = self.disabled
+        if self.user_id:
+            result["user_id"] = self.user_id
+        if self.request_users:
+            result["request_users"] = self.request_users
+        if self.request_chat:
+            result["request_chat"] = self.request_chat
+        if self.request_location:
+            result["request_location"] = self.request_location
+        if self.request_contact:
+            result["request_contact"] = self.request_contact
+        if self.request_poll:
+            result["request_poll"] = self.request_poll
+
+        return result
+
+
+def create_enhanced_button(config: EnhancedButtonConfig) -> Dict[str, Any]:
+    """Create enhanced button from configuration"""
+    return config.to_dict()
+
+
+def create_button_row(buttons: List[EnhancedButtonConfig]) -> List[Dict[str, Any]]:
+    """Create button row from enhanced button configurations"""
+    return [create_enhanced_button(button) for button in buttons]
+
+
+def create_inline_keyboard(
+    rows: List[List[EnhancedButtonConfig]],
+    resize_keyboard: bool = False,
+    one_time_keyboard: bool = False,
+    selective: bool = False,
+    input_field_placeholder: Optional[str] = None,
+) -> InlineKeyboardMarkup:
+    """Create inline keyboard with enhanced features"""
+    keyboard_rows = [create_button_row(row) for row in rows]
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=keyboard_rows,
+        resize_keyboard=resize_keyboard,
+        one_time_keyboard=one_time_keyboard,
+        selective=selective,
+        input_field_placeholder=input_field_placeholder,
+    )
+
+
+# Modern decorators for inline handlers
+def inline_rate_limit(
+    calls: int = 5,
+    period: int = 60,
+    per_user: bool = True,
+    key_func: Optional[Callable[[CallbackQuery], str]] = None,
+) -> Callable[[Callable], Callable]:
+    """Rate limiting decorator for inline handlers"""
+
+    def decorator(func: Callable) -> Callable:
+        _rate_limit_data: Dict[str, List[float]] = {}
+
+        @wraps(func)
+        async def wrapper(call: CallbackQuery, *args, **kwargs):
+            # Generate rate limit key
+            key_parts = []
+
+            if per_user:
+                key_parts.append(f"user_{call.from_user.id}")
+
+            # Use custom key function if provided
+            if key_func:
+                try:
+                    custom_key = key_func(call)
+                    if custom_key:
+                        key_parts.append(custom_key)
+                except Exception:
+                    pass
+
+            key = "_".join(key_parts) if key_parts else "global"
+
+            now = time.time()
+            if key not in _rate_limit_data:
+                _rate_limit_data[key] = []
+
+            # Clean old calls
+            _rate_limit_data[key] = [
+                call_time
+                for call_time in _rate_limit_data[key]
+                if now - call_time < period
+            ]
+
+            # Check rate limit
+            if len(_rate_limit_data[key]) >= calls:
+                await call.answer("Rate limit exceeded", show_alert=True)
+                return
+
+            # Add current call
+            _rate_limit_data[key].append(now)
+
+            return await func(call, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def inline_permission_check(
+    required_level: int = 0,
+    custom_check: Optional[Callable[[CallbackQuery], bool]] = None,
+    error_message: str = "Permission denied",
+) -> Callable[[Callable], Callable]:
+    """Permission checking decorator for inline handlers"""
+
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        async def wrapper(call: CallbackQuery, *args, **kwargs):
+            # Check custom permission if provided
+            if custom_check and not custom_check(call):
+                await call.answer(error_message, show_alert=True)
+                return
+
+            # Check permission level (integrate with existing security system)
+            # This would integrate with your existing security system
+            # For now, just pass through
+
+            return await func(call, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def inline_error_handler(
+    exceptions: type[Exception] | tuple[type[Exception], ...] = Exception,
+    fallback_message: str = "An error occurred",
+    log_errors: bool = True,
+    show_alert: bool = True,
+) -> Callable[[Callable], Callable]:
+    """Error handling decorator for inline handlers"""
+
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        async def wrapper(call: CallbackQuery, *args, **kwargs):
+            try:
+                return await func(call, *args, **kwargs)
+            except exceptions as e:
+                if log_errors:
+                    logger.error(
+                        f"Error in inline handler {func.__name__}: {e}", exc_info=True
+                    )
+
+                await call.answer(fallback_message, show_alert=show_alert)
+                return None
+
+        return wrapper
+
+    return decorator
+
+
+# Modern utility functions for inline operations
+def parse_callback_data(data: str) -> Dict[str, str]:
+    """Parse callback data with modern Python 3.12+ features"""
+    if not data:
+        return {}
+
+    try:
+        # Parse key-value pairs separated by | and :
+        parts = data.split("|")
+        result = {}
+
+        for part in parts:
+            if ":" in part:
+                key, value = part.split(":", 1)
+                result[key.strip()] = value.strip()
+            else:
+                # Single value without key
+                result["data"] = part.strip()
+
+        return result
+    except Exception as e:
+        logger.error(f"Error parsing callback data '{data}': {e}")
+        return {"error": str(e)}
+
+
+def format_callback_data(data: Dict[str, str]) -> str:
+    """Format callback data from dictionary"""
+    parts = []
+
+    for key, value in data.items():
+        parts.append(f"{key}:{value}")
+
+    return "|".join(parts)
+
+
+def create_callback_data(
+    action: str,
+    module: Optional[str] = None,
+    user_id: Optional[int] = None,
+    extra_data: Optional[Dict[str, str]] = None,
+) -> str:
+    """Create callback data with common fields"""
+    data: Dict[str, str] = {"action": action}
+
+    if module:
+        data["module"] = module
+
+    if user_id:
+        data["user"] = str(user_id)
+
+    if extra_data:
+        data.update(extra_data)
+
+    return format_callback_data(data)
+
+
+def get_button_text(button: Dict[str, Any]) -> str:
+    """Get button text with fallback"""
+    return button.get("text", "Button")
+
+
+def get_button_callback(button: Dict[str, Any]) -> Optional[str]:
+    """Get button callback data"""
+    return button.get("callback")
+
+
+def is_button_action(button: Dict[str, Any], action: str) -> bool:
+    """Check if button has specific action"""
+    return button.get("action") == action
+
+
+# Modern inline form utilities
+class FormField(StrEnum):
+    """Form field types"""
+
+    TEXT = "text"
+    NUMBER = "number"
+    EMAIL = "email"
+    PHONE = "phone"
+    URL = "url"
+    DATE = "date"
+    TIME = "time"
+    DATETIME = "datetime"
+    PASSWORD = "password"
+    SELECT = "select"
+    MULTILINE = "multiline"
+    FILE = "file"
+    PHOTO = "photo"
+    VIDEO = "video"
+    AUDIO = "audio"
+    ANIMATION = "animation"
+    DOCUMENT = "document"
+    POLL = "poll"
+    LOCATION = "location"
+    CONTACT = "contact"
+    VENUE = "venue"
+
+
+@dataclass
+class FormFieldConfig:
+    """Form field configuration with Python 3.12+ features"""
+
+    name: str
+    field_type: FormField
+    label: Optional[str] = None
+    placeholder: Optional[str] = None
+    required: bool = False
+    default: Optional[str] = None
+    options: Optional[List[str]] = None
+    min_length: Optional[int] = None
+    max_length: Optional[int] = None
+    pattern: Optional[str] = None
+    validation_message: Optional[str] = None
+    icon: Optional[str] = None
+    tooltip: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format"""
+        result: Dict[str, Any] = {
+            "text": self.label or self.name,
+            "input": self.name,
+            "placeholder": self.placeholder or "",
+        }
+
+        # Add field type specific options
+        match self.field_type:
+            case FormField.SELECT:
+                if self.options:
+                    result["options"] = self.options
+            case FormField.MULTILINE:
+                result["field_type"] = "multiline"
+            case FormField.PASSWORD:
+                result["field_type"] = "password"
+            case FormField.EMAIL:
+                result["field_type"] = "email"
+            case FormField.PHONE:
+                result["field_type"] = "phone"
+            case FormField.URL:
+                result["field_type"] = "url"
+            case FormField.DATE:
+                result["field_type"] = "date"
+            case FormField.TIME:
+                result["field_type"] = "time"
+            case FormField.DATETIME:
+                result["field_type"] = "datetime"
+            case FormField.NUMBER:
+                result["field_type"] = "number"
+            case FormField.FILE:
+                result["field_type"] = "file"
+            case FormField.PHOTO:
+                result["field_type"] = "photo"
+            case FormField.VIDEO:
+                result["field_type"] = "video"
+            case FormField.AUDIO:
+                result["field_type"] = "audio"
+            case FormField.ANIMATION:
+                result["field_type"] = "animation"
+            case FormField.DOCUMENT:
+                result["field_type"] = "document"
+            case FormField.POLL:
+                result["field_type"] = "poll"
+            case FormField.LOCATION:
+                result["request_location"] = True
+            case FormField.CONTACT:
+                result["request_contact"] = True
+            case FormField.VENUE:
+                result["request_venue"] = True
+
+        return result
+
+
+def create_form_field(config: FormFieldConfig) -> Dict[str, Any]:
+    """Create form field from configuration"""
+    return config.to_dict()
+
+
+def create_form_row(fields: List[FormFieldConfig]) -> List[Dict[str, Any]]:
+    """Create form row from field configurations"""
+    return [create_form_field(field) for field in fields]
+
+
+def create_form(
+    fields: List[List[FormFieldConfig]],
+    submit_text: str = "Submit",
+    submit_callback: str = "submit",
+    cancel_text: str = "Cancel",
+    cancel_callback: str = "cancel",
+) -> List[List[Dict[str, Any]]]:
+    """Create complete form with submit/cancel buttons"""
+    form_rows = [create_form_row(row) for row in fields]
+
+    # Add submit and cancel buttons
+    button_row = [
+        EnhancedButtonConfig(
+            text=submit_text,
+            button_type=ButtonType.CALLBACK,
+            callback_data=submit_callback,
+            style=ButtonStyle.SUCCESS,
+        ).to_dict(),
+        EnhancedButtonConfig(
+            text=cancel_text,
+            button_type=ButtonType.CALLBACK,
+            callback_data=cancel_callback,
+            style=ButtonStyle.SECONDARY,
+        ).to_dict(),
+    ]
+
+    form_rows.append(button_row)
+    return form_rows

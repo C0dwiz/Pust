@@ -7,7 +7,7 @@ import contextlib
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -18,9 +18,8 @@ import contextlib
 # Copyright (C) 2026 CodWiz
 
 
-import Pusttl
-from Pusttl.extensions.html import CUSTOM_EMOJIS
-from Pusttl.tl.types import Message, User
+import telethon
+from telethon.tl.types import Message, User
 
 from .. import loader, main, utils, version
 from ..inline.types import InlineCall
@@ -55,7 +54,7 @@ class CoreMod(loader.Module):
                 ),
                 validator=loader.validators.Boolean(),
                 on_change=self._process_config_changes,
-                ),
+            ),
         )
 
     async def client_ready(self):
@@ -66,11 +65,16 @@ class CoreMod(loader.Module):
                     "callback": self._inline__choose__installation,
                     "args": (platform,),
                 }
-                for platform in ['vds', 'wsl',
-                                 'userland', 'jamhost',
-                                 'hikkahost', 'lavhost']
+                for platform in [
+                    "vds",
+                    "wsl",
+                    "userland",
+                    "jamhost",
+                    "hikkahost",
+                    "lavhost",
+                ]
             ],
-            2
+            2,
         )
 
     def _process_config_changes(self):
@@ -114,26 +118,31 @@ class CoreMod(loader.Module):
         module = self.allmodules.get_classname(module)
         return f"{str(chatid)}.{module}" if module else chatid
 
-    @loader.command(ru_doc="Информация о Хероку", en_doc="Information of Pust", ua_doc="Інформація про Хероку", de_doc="Informationen über Pust")
+    @loader.command(
+        ru_doc="Информация о Хероку",
+        en_doc="Information of Pust",
+        ua_doc="Інформація про Хероку",
+        de_doc="Informationen über Pust",
+    )
     async def Pustcmd(self, message: Message):
         await utils.answer(
             message,
             self.strings("Pust").format(
                 (
                     utils.get_platform_emoji()
-                    if self._client.Pust_me.premium and CUSTOM_EMOJIS
+                    if self._client.Pust_me.premium and main.CUSTOM_EMOJIS
                     else "🪐 <b>Pust userbot</b>"
                 ),
                 *version.__version__,
                 utils.get_commit_url(),
-                f"{Pusttl.__version__} #{Pusttl.tl.alltlobjects.LAYER}",
+                f"{telethon.__version__} #{telethon.tl.alltlobjects.LAYER}",
             )
             + (
                 ""
                 if version.branch == "master"
                 else self.strings("unstable").format(version.branch)
             ),
-            file= "https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/Pust/Pust_cmd.png",
+            file="https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/Pust/Pust_cmd.png",
             reply_to=getattr(message, "reply_to_msg_id", None),
         )
 
@@ -220,25 +229,34 @@ class CoreMod(loader.Module):
                 args[1] = int(args[1])
             try:
                 entity = await self.client.get_entity(args[1])
-            except:
-                return await utils.answer(message, self.strings["invalid_id_or_username"])
-            
+            except (ValueError, TypeError):
+                return await utils.answer(
+                    message, self.strings["invalid_id_or_username"]
+                )
+
             if not isinstance(entity, User):
-                return await utils.answer(message, f"The entity {args[1]} is not a User")
-            
+                return await utils.answer(
+                    message, f"The entity {args[1]} is not a User"
+                )
+
             if entity.id != self.tg_id:
                 sgroup_users = []
                 for g in self._client.dispatcher.security._sgroups.values():
                     for u in g.users:
                         sgroup_users.append(u)
 
-                tsec_users = [rule['target'] for rule in self._client.dispatcher.security._tsec_user]
+                tsec_users = [
+                    rule["target"]
+                    for rule in self._client.dispatcher.security._tsec_user
+                ]
                 ub_owners = self._client.dispatcher.security.owner.copy()
 
                 all_users = sgroup_users + tsec_users + ub_owners
 
                 if entity.id not in all_users:
-                    return await utils.answer(message, self.strings["id_not_found_scgroup"])
+                    return await utils.answer(
+                        message, self.strings["id_not_found_scgroup"]
+                    )
 
                 oldprefix = utils.escape_html(self.get_prefix(entity.id))
                 all_prefixes = self._db.get(
@@ -264,7 +282,6 @@ class CoreMod(loader.Module):
                         entity_id=args[1],
                     ),
                 )
-
 
         oldprefix = utils.escape_html(self.get_prefix())
 
@@ -375,19 +392,22 @@ class CoreMod(loader.Module):
 
         args = utils.get_args_raw(message)
 
-        if (not args or args not in {'-vds', '-wsl', '-ul', '-jh', '-hh', '-lh'}) and \
-            not (await self.inline.form(
+        if (
+            not args or args not in {"-vds", "-wsl", "-ul", "-jh", "-hh", "-lh"}
+        ) and not (
+            await self.inline.form(
                 self.strings("choose_installation"),
                 message,
                 reply_markup=self._markup,
                 photo="https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/Pust/Pust_installation.png",
-        )
-            ):
-
+            )
+        ):
             await self.client.send_file(
                 message.peer_id,
                 "https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/Pust/Pust_installation.png",
-                caption=self.strings("vds_install"), reply_to=getattr(message, "reply_to_msg_id", None),)
+                caption=self.strings("vds_install"),
+                reply_to=getattr(message, "reply_to_msg_id", None),
+            )
         elif "-vds" in args:
             await utils.answer(message, self.strings("vds_install"))
         elif "-wsl" in args:
@@ -405,7 +425,6 @@ class CoreMod(loader.Module):
         with contextlib.suppress(Exception):
             await utils.answer(
                 call,
-                self.strings(f'{platform}_install'),
+                self.strings(f"{platform}_install"),
                 reply_markup=self._markup,
             )
-

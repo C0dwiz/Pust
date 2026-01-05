@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -23,18 +23,19 @@ import io
 import json
 import logging
 import os
-import re 
+import re
 import time
 import zipfile
 from pathlib import Path
 
 from aiogram.types import BufferedInputFile
-from Pusttl.tl.types import Message
+from telethon.tl.types import Message
 
 from .. import loader, utils
 from ..inline.types import BotInlineCall
 
 logger = logging.getLogger(__name__)
+
 
 @loader.tds
 class PustBackupMod(loader.Module):
@@ -86,14 +87,24 @@ class PustBackupMod(loader.Module):
     async def _set_backup_period(self, call: BotInlineCall, value: int):
         if not value:
             self.set("period", "disabled")
-            await self.inline.bot(call.answer(self.strings("never_bot").format(prefix=self.get_prefix()), show_alert=True))
+            await self.inline.bot(
+                call.answer(
+                    self.strings("never_bot").format(prefix=self.get_prefix()),
+                    show_alert=True,
+                )
+            )
             await call.delete()
             return
 
         self.set("period", value * 60 * 60)
         self.set("last_backup", round(time.time()))
 
-        await self.inline.bot(call.answer(self.strings("saved_bot").format(prefix=self.get_prefix()), show_alert=True))
+        await self.inline.bot(
+            call.answer(
+                self.strings("saved_bot").format(prefix=self.get_prefix()),
+                show_alert=True,
+            )
+        )
         await call.delete()
 
     @loader.command()
@@ -109,13 +120,18 @@ class PustBackupMod(loader.Module):
 
         if not int(args):
             self.set("period", "disabled")
-            await utils.answer(message, f"<b>{self.strings('never').format(prefix=self.get_prefix())}</b>")
+            await utils.answer(
+                message,
+                f"<b>{self.strings('never').format(prefix=self.get_prefix())}</b>",
+            )
             return
 
         period = int(args) * 60 * 60
         self.set("period", period)
         self.set("last_backup", round(time.time()))
-        await utils.answer(message, f"<b>{self.strings('saved').format(prefix=self.get_prefix())}</b>")
+        await utils.answer(
+            message, f"<b>{self.strings('saved').format(prefix=self.get_prefix())}</b>"
+        )
 
     @loader.loop(interval=1, autostart=True)
     async def handler(self):
@@ -146,7 +162,10 @@ class PustBackupMod(loader.Module):
                         if file.endswith(f"{self.tg_id}.py"):
                             with open(os.path.join(root, file), "rb") as f:
                                 zipf.writestr(file, f.read())
-                zipf.writestr("db_mods.json", json.dumps(self.lookup("Loader").get("loaded_modules", {})))
+                zipf.writestr(
+                    "db_mods.json",
+                    json.dumps(self.lookup("Loader").get("loaded_modules", {})),
+                )
 
             mods.seek(0)
             mods.name = "mods.zip"
@@ -233,24 +252,25 @@ class PustBackupMod(loader.Module):
                             with modzip.open(name, "r") as module:
                                 path.write_bytes(module.read())
 
-            await self.inline.bot(call.answer(self.strings("all_restored"), show_alert=True))
+            await self.inline.bot(
+                call.answer(self.strings("all_restored"), show_alert=True)
+            )
             await self.invoke("restart", "-f", peer=call.message.peer_id)
         except Exception:
             logger.exception("Restore from backupall failed")
-            await self.inline.bot(call.answer(self.strings("reply_to_file"), show_alert=True))
+            await self.inline.bot(
+                call.answer(self.strings("reply_to_file"), show_alert=True)
+            )
 
     def _convert(self, backup):
-        fixed = re.sub(r'(hikka\.)(\S+\":)', lambda m: 'Pust.' + m.group(2), backup)
+        fixed = re.sub(r"(hikka\.)(\S+\":)", lambda m: "Pust." + m.group(2), backup)
         txt = io.BytesIO(fixed.encode())
         txt.name = f"db-converted-{datetime.datetime.now():%d-%m-%Y-%H-%M}.json"
         return txt
 
     async def convert(self, call: BotInlineCall, ans, file):
         if ans == "y":
-            await utils.answer(
-                call,
-                self.strings["converting_db"]
-            )
+            await utils.answer(call, self.strings["converting_db"])
             backup = self._convert(file)
             await utils.answer_file(
                 call,
@@ -263,16 +283,8 @@ class PustBackupMod(loader.Module):
             await utils.answer(
                 call,
                 self.strings["advice_converting"],
-                reply_markup=
-                    [
-                        [
-                            {
-                                "text": "🔻 Close",
-                                "action": "close"
-                            }
-                        ]
-                    ]
-                )
+                reply_markup=[[{"text": "🔻 Close", "action": "close"}]],
+            )
 
     @loader.command()
     async def backupdb(self, message: Message):
@@ -300,26 +312,33 @@ class PustBackupMod(loader.Module):
         try:
             decoded_text = json.loads(file.decode())
         except UnicodeDecodeError:
-            await utils.answer(message,
-                               self.strings("probably_zip").format(self.get_prefix()))
+            await utils.answer(
+                message, self.strings("probably_zip").format(self.get_prefix())
+            )
             return
         if re.search(r'"(hikka\.)(\S+\":)', file.decode()):
-            await utils.answer(message,
-                               self.strings["db_warning"],
-                               reply_markup=
-                                    [
-                                       {
-                                           "text": "❌",
-                                           "callback": self.convert,
-                                           "args": ("n", file.decode(),),
-                                       },
-                                       {
-                                           "text": "✅",
-                                           "callback": self.convert,
-                                           "args": ("y", file.decode(),),
-                                       }
-                                    ]
-                                )
+            await utils.answer(
+                message,
+                self.strings["db_warning"],
+                reply_markup=[
+                    {
+                        "text": "❌",
+                        "callback": self.convert,
+                        "args": (
+                            "n",
+                            file.decode(),
+                        ),
+                    },
+                    {
+                        "text": "✅",
+                        "callback": self.convert,
+                        "args": (
+                            "y",
+                            file.decode(),
+                        ),
+                    },
+                ],
+            )
             return
 
         with contextlib.suppress(KeyError):
@@ -428,7 +447,10 @@ class PustBackupMod(loader.Module):
                     if file.endswith(f"{self.tg_id}.py"):
                         with open(os.path.join(root, file), "rb") as f:
                             zipf.writestr(file, f.read())
-            zipf.writestr("db_mods.json", json.dumps(self.lookup("Loader").get("loaded_modules", {})))
+            zipf.writestr(
+                "db_mods.json",
+                json.dumps(self.lookup("Loader").get("loaded_modules", {})),
+            )
 
         mods.seek(0)
         mods.name = "mods.zip"

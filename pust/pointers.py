@@ -6,9 +6,15 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
+
+# SPDX-License-Identifier: GNU AGPL v3.0
+#
+# This file is a part of Pust Userbot.
+#
+# Copyright (C) 2026 CodWiz
 
 from __future__ import annotations
 
@@ -49,14 +55,14 @@ class PointerList(list):
         self._module = module
         self._key = key
         self._default: list = default if default is not None else []
-        
+
         initial_data = db.get(module, key, self._default)
         if not isinstance(initial_data, list):
             raise TypeError(
                 f"Database value for {module}.{key} is not a list, "
                 f"got {type(initial_data).__name__}"
             )
-        
+
         super().__init__(initial_data)
 
     @property
@@ -69,7 +75,7 @@ class PointerList(list):
         """Replace the entire list"""
         if not isinstance(value, list):
             raise TypeError(f"Expected list, got {type(value).__name__}")
-        
+
         self.clear()
         self.extend(value)
         self._save()
@@ -158,14 +164,14 @@ class PointerDict(dict):
         self._module = module
         self._key = key
         self._default: dict = default if default is not None else {}
-        
+
         initial_data = db.get(module, key, self._default)
         if not isinstance(initial_data, dict):
             raise TypeError(
                 f"Database value for {module}.{key} is not a dict, "
                 f"got {type(initial_data).__name__}"
             )
-        
+
         super().__init__(initial_data)
 
     @property
@@ -178,7 +184,7 @@ class PointerDict(dict):
         """Replace the entire dict"""
         if not isinstance(value, dict):
             raise TypeError(f"Expected dict, got {type(value).__name__}")
-        
+
         self.clear()
         self.update(value)
         self._save()
@@ -238,7 +244,7 @@ class PointerDict(dict):
 
 class BaseSerializingMiddlewareDict(collections.abc.MutableMapping):
     """Base class for dict-like structures with custom serialization"""
-    
+
     def __init__(self, pointer: PointerDict) -> None:
         if not isinstance(pointer, PointerDict):
             raise TypeError(f"Expected PointerDict, got {type(pointer).__name__}")
@@ -322,7 +328,7 @@ class BaseSerializingMiddlewareDict(collections.abc.MutableMapping):
 
 class BaseSerializingMiddlewareList(collections.abc.MutableSequence):
     """Base class for list-like structures with custom serialization"""
-    
+
     def __init__(self, pointer: PointerList) -> None:
         if not isinstance(pointer, PointerList):
             raise TypeError(f"Expected PointerList, got {type(pointer).__name__}")
@@ -383,20 +389,20 @@ class BaseSerializingMiddlewareList(collections.abc.MutableSequence):
         return [self.deserialize(item) for item in self._pointer.data]
 
     def index(self, item: Any, start: int = 0, stop: int = None) -> int:  # type: ignore
-        return self._pointer.index(self.serialize(item), start, stop or len(self._pointer))
+        return self._pointer.index(
+            self.serialize(item), start, stop or len(self._pointer)
+        )
 
     def count(self, item: Any) -> int:
         return self._pointer.count(self.serialize(item))
 
     def sort(self, *, key: Any = None, reverse: bool = False) -> None:
-        # Sort by deserialized values using a custom key function
         if key is None:
             key = lambda x: self.serialize(x)  # noqa
         else:
             original_key = key
             key = lambda x: original_key(self.deserialize(x))  # noqa
-        
-        # Sort in-place by temporarily converting, sorting, and converting back
+
         deserialized = [self.deserialize(item) for item in self._pointer]
         deserialized.sort(key=key, reverse=reverse)
         self._pointer.clear()
@@ -410,14 +416,14 @@ class BaseSerializingMiddlewareList(collections.abc.MutableSequence):
 
 class NamedTupleMiddlewareList(BaseSerializingMiddlewareList):
     """Middleware for lists of NamedTuple objects"""
-    
+
     def __init__(self, pointer: PointerList, item_type: Type[Any]) -> None:
         super().__init__(pointer)
         self._item_type = item_type
 
     def serialize(self, item: Any) -> JSONSerializable:
         """Convert NamedTuple to dict"""
-        if not hasattr(item, '_asdict'):
+        if not hasattr(item, "_asdict"):
             raise TypeError(
                 f"Expected NamedTuple with _asdict method, got {type(item).__name__}"
             )
@@ -432,14 +438,14 @@ class NamedTupleMiddlewareList(BaseSerializingMiddlewareList):
 
 class NamedTupleMiddlewareDict(BaseSerializingMiddlewareDict):
     """Middleware for dicts of NamedTuple objects"""
-    
+
     def __init__(self, pointer: PointerDict, item_type: Type[Any]) -> None:
         super().__init__(pointer)
         self._item_type = item_type
 
     def serialize(self, item: Any) -> JSONSerializable:
         """Convert NamedTuple to dict"""
-        if not hasattr(item, '_asdict'):
+        if not hasattr(item, "_asdict"):
             raise TypeError(
                 f"Expected NamedTuple with _asdict method, got {type(item).__name__}"
             )

@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -18,7 +18,7 @@
 
 import logging
 
-from Pusttl.tl.types import Message
+from telethon.tl.types import Message
 
 from .. import loader, translations, utils
 from ..inline.types import InlineCall

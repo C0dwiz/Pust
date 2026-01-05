@@ -8,7 +8,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -33,8 +33,8 @@ from logging.handlers import RotatingFileHandler
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 from aiogram.exceptions import TelegramNetworkError, TelegramRetryAfter
-from Pusttl.errors import PersistentTimestampOutdatedError
-from Pusttl.errors.rpcbaseerrors import RPCError, ServerError
+from telethon.errors import PersistentTimestampOutdatedError
+from telethon.errors.rpcbaseerrors import RPCError, ServerError
 
 from . import utils
 from .types import BotInlineCall, CoreOverwriteError
@@ -292,7 +292,7 @@ class TelegramLogsHandler(logging.Handler):
     ) -> None:
         """Show full traceback in Telegram messages"""
         try:
-            import Pusttl.extensions.html
+            import telethon.extensions.html
 
             chunks_text = (
                 f"{exception.message}\n\n"
@@ -300,7 +300,7 @@ class TelegramLogsHandler(logging.Handler):
                 f"{exception.full_stack}"
             )
 
-            parsed_chunks = Pusttl.extensions.html.parse(chunks_text)
+            parsed_chunks = telethon.extensions.html.parse(chunks_text)
             chunks = list(utils.smart_split(*parsed_chunks, self._TG_MESSAGE_LIMIT))
 
             if chunks:
@@ -571,7 +571,7 @@ def init() -> None:
     root_logger.addHandler(main_handler)
     root_logger.setLevel(logging.NOTSET)
 
-    logging.getLogger("Pusttl").setLevel(logging.WARNING)
+    logging.getLogger("telethon").setLevel(logging.WARNING)
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("aiohttp").setLevel(logging.WARNING)
     logging.getLogger("aiogram").setLevel(logging.WARNING)

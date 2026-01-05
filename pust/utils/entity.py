@@ -1,7 +1,6 @@
-
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -17,26 +16,26 @@ import random
 import re
 import string
 import time
-import typing
+from enum import StrEnum
 from urllib.parse import urlparse
-import emoji
 
-import Pusttl
+import emoji
 import requests
+import telethon
 from aiogram.types import Message as AiogramMessage
-from Pusttl import hints
-from Pusttl.tl.custom.message import Message
-from Pusttl.tl.functions.account import UpdateNotifySettingsRequest
-from Pusttl.tl.functions.channels import (
+from telethon import hints
+from telethon.tl.custom.message import Message
+from telethon.tl.functions.account import UpdateNotifySettingsRequest
+from telethon.tl.functions.channels import (
     CreateChannelRequest,
     EditPhotoRequest,
 )
-from Pusttl.tl.functions.messages import (
+from telethon.tl.functions.messages import (
     GetDialogFiltersRequest,
     SetHistoryTTLRequest,
     UpdateDialogFilterRequest,
 )
-from Pusttl.tl.types import (
+from telethon.tl.types import (
     Channel,
     InputPeerNotifySettings,
     MessageEntityBankCard,
@@ -71,34 +70,55 @@ from .._internal import fw_protect
 from ..tl_cache import CustomTelegramClient
 from ..types import Module
 
-FormattingEntity = typing.Union[
-    MessageEntityUnknown,
-    MessageEntityMention,
-    MessageEntityHashtag,
-    MessageEntityBotCommand,
-    MessageEntityUrl,
-    MessageEntityEmail,
-    MessageEntityBold,
-    MessageEntityItalic,
-    MessageEntityCode,
-    MessageEntityPre,
-    MessageEntityTextUrl,
-    MessageEntityMentionName,
-    MessageEntityPhone,
-    MessageEntityCashtag,
-    MessageEntityUnderline,
-    MessageEntityStrike,
-    MessageEntityBlockquote,
-    MessageEntityBankCard,
-    MessageEntitySpoiler,
-]
 
-parser = Pusttl.utils.sanitize_parse_mode("html")
+class EntityType(StrEnum):
+    """Entity type enumeration"""
+
+    USER = "user"
+    CHAT = "chat"
+    CHANNEL = "channel"
+    UNKNOWN = "unknown"
+
+
+class MessageFormat(StrEnum):
+    """Message format enumeration"""
+
+    HTML = "html"
+    MARKDOWN = "markdown"
+    PLAIN = "plain"
+    UNKNOWN = "unknown"
+
+
+FormattingEntity = (
+    MessageEntityUnknown
+    | MessageEntityMention
+    | MessageEntityHashtag
+    | MessageEntityBotCommand
+    | MessageEntityUrl
+    | MessageEntityEmail
+    | MessageEntityBold
+    | MessageEntityItalic
+    | MessageEntityCode
+    | MessageEntityPre
+    | MessageEntityTextUrl
+    | MessageEntityMentionName
+    | MessageEntityPhone
+    | MessageEntityCashtag
+    | MessageEntityUnderline
+    | MessageEntityStrike
+    | MessageEntityBlockquote
+    | MessageEntityBankCard
+    | MessageEntitySpoiler
+)
+
+parser = telethon.utils.sanitize_parse_mode("html")
 logger = logging.getLogger(__name__)
+
 
 def get_lang_flag(countrycode: str) -> str:
     """
     Gets an emoji of specified countrycode
+
     :param countrycode: 2-letter countrycode
     :return: Emoji flag
     """
@@ -118,38 +138,41 @@ def get_lang_flag(countrycode: str) -> str:
 
 
 def get_entity_url(
-    entity: typing.Union[User, Channel],
+    entity: User | Channel,
     openmessage: bool = False,
 ) -> str:
     """
     Get link to object, if available
+
     :param entity: Entity to get url of
     :param openmessage: Use tg://openmessage link for users
     :return: Link to object or empty string
     """
-    return (
-        (
-            f"tg://openmessage?id={entity.id}"
-            if openmessage
-            else f"tg://user?id={entity.id}"
-        )
-        if isinstance(entity, User)
-        else (
-            f"tg://resolve?domain={entity.username}"
-            if getattr(entity, "username", None)
-            else ""
-        )
-    )
+    match entity:
+        case User():
+            return (
+                f"tg://openmessage?id={entity.id}"
+                if openmessage
+                else f"tg://user?id={entity.id}"
+            )
+        case Channel():
+            return (
+                f"tg://resolve?domain={entity.username}"
+                if getattr(entity, "username", None)
+                else ""
+            )
+        case _:
+            return ""
+
 
 def remove_emoji(text: str) -> str:
-
     """
     Removes all emoji from text
     """
 
     allchars = [str for str in text]
     emoji_list = [c for c in allchars if c in emoji.EMOJI_DATA]
-    clean_text = ''.join([str for str in text if not any(i in str for i in emoji_list)])
+    clean_text = "".join([str for str in text if not any(i in str for i in emoji_list)])
     return clean_text
 
 
@@ -161,17 +184,15 @@ def remove_html(text: str, escape: bool = False, keep_emojis: bool = False) -> s
     :param keep_emojis: Keep custom emojis
     :return: Text without HTML
     """
-    return (escape_html if escape else str)(
-        re.sub(
-            (
-                r"(<\/?a.*?>|<\/?b>|<\/?i>|<\/?u>|<\/?strong>|<\/?em>|<\/?code>|<\/?strike>|<\/?del>|<\/?pre.*?>|<\/?blockquote.*?>)"
-                if keep_emojis
-                else r"(<\/?a.*?>|<\/?b>|<\/?i>|<\/?u>|<\/?strong>|<\/?em>|<\/?code>|<\/?strike>|<\/?del>|<\/?pre.*?>|<\/?emoji.*?>|<\/?blockquote.*?>)"
-            ),
-            "",
-            text,
-        )
+
+    pattern = (
+        r"(<\/?a.*?>|<\/?b>|<\/?i>|<\/?u>|<\/?strong>|<\/?em>|<\/?code>|<\/?strike>|<\/?del>|<\/?pre.*?>|<\/?blockquote.*?>)"
+        if keep_emojis
+        else r"(<\/?a.*?>|<\/?b>|<\/?i>|<\/?u>|<\/?strong>|<\/?em>|<\/?code>|<\/?strike>|<\/?del>|<\/?pre.*?>|<\/?emoji.*?>|<\/?blockquote.*?>)"
     )
+
+    return (escape_html if escape else str)(re.sub(pattern, "", text))
+
 
 def check_url(url: str) -> bool:
     """
@@ -184,9 +205,11 @@ def check_url(url: str) -> bool:
     except Exception:
         return False
 
-def get_link(user: typing.Union[User, Channel], /) -> str:
+
+def get_link(user: User | Channel, /) -> str:
     """
     Get telegram permalink to entity
+
     :param user: User or channel
     :return: Link to entity
     """
@@ -210,13 +233,14 @@ async def asset_channel(
     silent: bool = False,
     archive: bool = False,
     invite_bot: bool = False,
-    avatar: typing.Optional[str] = None,
-    ttl: typing.Optional[int] = None,
+    avatar: str | None = None,
+    ttl: int | None = None,
     forum: bool = False,
-    _folder: typing.Optional[str] = None,
-) -> typing.Tuple[Channel, bool]:
+    _folder: str | None = None,
+) -> tuple[Channel, bool]:
     """
     Create new channel (if needed) and return its entity
+
     :param client: Telegram client to create channel by
     :param title: Channel title
     :param description: Description
@@ -238,7 +262,7 @@ async def asset_channel(
     ):
         return client._channels_cache[title]["peer"], False
 
-    # legacy Pust / hikka chats conversion to Pust
+    # legacy Heroku / hikka chats conversion to Pust
     if title.startswith("hikka-"):
         title = title.replace("hikka-", "Pust-")
 
@@ -316,6 +340,7 @@ async def asset_channel(
     client._channels_cache[title] = {"peer": peer, "exp": int(time.time())}
     return peer, True
 
+
 async def set_avatar(
     client: CustomTelegramClient,
     peer: hints.Entity,
@@ -366,9 +391,11 @@ async def set_avatar(
 
     return True
 
-async def get_target(message: Message, arg_no: int = 0) -> typing.Optional[int]:
+
+async def get_target(message: Message, arg_no: int = 0) -> int | None:
     """
     Get target from message
+
     :param message: Message to get target from
     :param arg_no: Argument number to get target from
     :return: Target
@@ -402,9 +429,11 @@ async def get_target(message: Message, arg_no: int = 0) -> typing.Optional[int]:
         if isinstance(entity, User):
             return entity.id
 
-async def get_user(message: Message) -> typing.Optional[User]:
+
+async def get_user(message: Message) -> User | None:
     """
     Get user who sent message, searching if not found easily
+
     :param message: Message to get user from
     :return: User who sent message
     """
@@ -431,13 +460,15 @@ async def get_user(message: Message) -> typing.Optional[User]:
     logger.error("`peer_id` is not a user, chat or channel")
     return None
 
-def get_chat_id(message: typing.Union[Message, AiogramMessage]) -> int:
+
+def get_chat_id(message: Message | AiogramMessage) -> int:
     """
     Get the chat ID, but without -100 if its a channel
+
     :param message: Message to get chat ID from
     :return: Chat ID
     """
-    return Pusttl.utils.resolve_id(
+    return telethon.utils.resolve_id(
         getattr(message, "chat_id", None)
         or getattr(getattr(message, "chat", None), "id", None)
     )[0]
@@ -446,15 +477,17 @@ def get_chat_id(message: typing.Union[Message, AiogramMessage]) -> int:
 def get_entity_id(entity: hints.Entity) -> int:
     """
     Get entity ID
+
     :param entity: Entity to get ID from
     :return: Entity ID
     """
-    return Pusttl.utils.get_peer_id(entity)
+    return telethon.utils.get_peer_id(entity)
 
 
 def escape_html(text: str, /) -> str:  # sourcery skip
     """
     Pass all untrusted/potentially corrupt input here
+
     :param text: Text to escape
     :return: Escaped text
     """
@@ -464,6 +497,7 @@ def escape_html(text: str, /) -> str:  # sourcery skip
 def escape_quotes(text: str, /) -> str:
     """
     Escape quotes to html quotes
+
     :param text: Text to escape
     :return: Escaped text
     """
@@ -471,12 +505,13 @@ def escape_quotes(text: str, /) -> str:
 
 
 def relocate_entities(
-    entities: typing.List[FormattingEntity],
+    entities: list[FormattingEntity],
     offset: int,
-    text: typing.Optional[str] = None,
-) -> typing.List[FormattingEntity]:
+    text: str | None = None,
+) -> list[FormattingEntity]:
     """
     Move all entities by offset (truncating at text)
+
     :param entities: List of entities
     :param offset: Offset to move by
     :param text: Text to truncate at
@@ -496,11 +531,13 @@ def relocate_entities(
 
     return entities
 
+
 def find_caller(
-    stack: typing.Optional[typing.List[inspect.FrameInfo]] = None,
-) -> typing.Any:
+    stack: list[inspect.FrameInfo] | None = None,
+) -> object:
     """
     Attempts to find command in stack
+
     :param stack: Stack to search in
     :return: Command-caller or None
     """
@@ -542,6 +579,7 @@ def find_caller(
         ),
         None,
     )
+
 
 async def dnd(
     client: CustomTelegramClient,

@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -19,13 +19,13 @@
 import logging
 import random
 
-import Pusttl
-from Pusttl.tl.functions.messages import (
+import telethon
+from telethon.tl.functions.messages import (
     GetDialogFiltersRequest,
     UpdateDialogFilterRequest,
 )
-from Pusttl.tl.types import Message
-from Pusttl.utils import get_display_name
+from telethon.tl.types import Message
+from telethon.utils import get_display_name
 
 from .. import loader, main, utils
 from .._internal import fw_protect, restart
@@ -475,9 +475,10 @@ class PustSettingsMod(loader.Module):
     async def inline__setting(self, call: InlineCall, key: str, state: bool = False):
         if callable(key):
             key()
-            Pusttl.extensions.html.CUSTOM_EMOJIS = not main.get_config_key(
-                "disable_custom_emojis"
-            )
+            # Update custom emojis setting
+            import main
+
+            main.CUSTOM_EMOJIS = not main.get_config_key("disable_custom_emojis")
         else:
             self._db.set(main.__name__, key, state)
 
@@ -788,9 +789,7 @@ class PustSettingsMod(loader.Module):
 
         if module == "core":
             if method == "flush_entity_cache":
-                result = (
-                    f"Dropped {len(self._client._Pust_entity_cache)} cache records"
-                )
+                result = f"Dropped {len(self._client._Pust_entity_cache)} cache records"
                 self._client._Pust_entity_cache = {}
             elif method == "flush_fulluser_cache":
                 result = (
@@ -799,8 +798,7 @@ class PustSettingsMod(loader.Module):
                 self._client._Pust_fulluser_cache = {}
             elif method == "flush_fullchannel_cache":
                 result = (
-                    f"Dropped {len(self._client._Pust_fullchannel_cache)} cache"
-                    " records"
+                    f"Dropped {len(self._client._Pust_fullchannel_cache)} cache records"
                 )
                 self._client._Pust_fullchannel_cache = {}
             elif method == "flush_perms_cache":
@@ -858,4 +856,4 @@ class PustSettingsMod(loader.Module):
         await utils.answer(
             message,
             self.strings("invoke").format(method, utils.escape_html(result)),
-                )
+        )

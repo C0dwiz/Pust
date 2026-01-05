@@ -8,7 +8,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pustserbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -23,7 +23,6 @@ import contextlib
 import hashlib
 import logging
 import os
-import typing
 
 import requests
 
@@ -41,7 +40,7 @@ class LocalStorage:
     """Saves modules to disk and fetches them if remote storage is not available."""
 
     def __init__(self):
-        self._path = os.path.join(os.path.expanduser("~"), ".Pust "modules_cache")
+        self._path = os.path.join(os.path.expanduser("~"), ".Pust_modules_cache")
         self._ensure_dirs()
 
     @property
@@ -89,9 +88,10 @@ class LocalStorage:
 
         logger.debug("Saved module %s from %s to local cache.", module_name, repo)
 
-    def fetch(self, repo: str, module_name: str) -> typing.Optional[str]:
+    def fetch(self, repo: str, module_name: str) -> str | None:
         """
         Fetches module from disk.
+
         :param repo: Repository name.
         :param module_name: Module name.
         :return: Module source code or None.
@@ -109,7 +109,7 @@ class RemoteStorage:
         self._local_storage = LocalStorage()
         self._client = client
 
-    def preload(self, urls: typing.List[str]):
+    def preload(self, urls: list[str]) -> None:
         """Preloads modules from remote storage."""
         logger.debug("Preloading modules from remote storage.")
         for url in urls:
@@ -120,11 +120,11 @@ class RemoteStorage:
 
             sleep(5)
 
-
     @staticmethod
-    def _parse_url(url: str) -> typing.Tuple[str, str, str]:
+    def _parse_url(url: str) -> tuple[str, str, str]:
         """
         Parses a URL into a repository and module name.
+
         :param url: URL to parse.
         :return: Tuple of (url, repo, module_name).
         """
@@ -144,9 +144,10 @@ class RemoteStorage:
 
         return url, repo, module_name
 
-    def fetch(self, url: str, auth: typing.Optional[str] = None) -> str:
+    def fetch(self, url: str, auth: str | None = None) -> str:
         """
         Fetches the module from the remote storage.
+
         :param url: URL to the module.
         :param auth: Optional authentication string in the format "username:password".
         :return: Module source code.

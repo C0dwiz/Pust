@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pustserbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -18,6 +18,7 @@
 
 import json
 import logging
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -30,6 +31,32 @@ from .tl_cache import CustomTelegramClient
 from .types import Module
 
 logger = logging.getLogger(__name__)
+
+
+class LanguageCode(StrEnum):
+    """Supported language codes"""
+
+    ENGLISH = "en"
+    RUSSIAN = "ru"
+    UKRAINIAN = "ua"
+    GERMAN = "de"
+
+
+class PackFormat(StrEnum):
+    """Language pack format enumeration"""
+
+    YAML = ".yaml"
+    JSON = ".json"
+    YML = ".yml"
+
+
+class TranslationStatus(StrEnum):
+    """Translation status enumeration"""
+
+    LOADED = "loaded"
+    MISSING = "missing"
+    ERROR = "error"
+    PARSING = "parsing"
 
 
 LANG_PACKS_DIR = Path(__file__).parent / "langpacks"
@@ -49,12 +76,26 @@ yaml.default_flow_style = False
 
 
 def format_string(text: str, kwargs: Dict[str, Any]) -> str:
-    """Format string with named placeholders"""
-    for key, value in kwargs.items():
-        placeholder = f"{{{key}}}"
-        if placeholder in text:
-            text = text.replace(placeholder, str(value))
-    return text
+    """Format string with named placeholders using modern Python 3.12+ features"""
+    if not kwargs:
+        return text
+
+    match len(kwargs):
+        case 0:
+            return text
+        case 1:
+            key, value = next(iter(kwargs.items()))
+            placeholder = f"{{{key}}}"
+            return (
+                text.replace(placeholder, str(value)) if placeholder in text else text
+            )
+        case _:
+            result = text
+            for key, value in kwargs.items():
+                placeholder = f"{{{key}}}"
+                if placeholder in result:
+                    result = result.replace(placeholder, str(value))
+            return result
 
 
 class BaseTranslator:
@@ -83,32 +124,43 @@ class BaseTranslator:
         prefix: str = "Pustodules.",
     ) -> Optional[Dict[str, Any]]:
         """
-        Parse language pack content
+        Parse language pack content using modern Python 3.12+ features
 
         Supports both YAML and JSON formats with special handling for
         multi-language packs and module prefixes.
         """
         try:
-            if suffix == ".json":
-                return json.loads(content)
+            match suffix:
+                case PackFormat.JSON:
+                    return json.loads(content)
+                case PackFormat.YAML | PackFormat.YML:
+                    parsed = yaml.load(content)
+                    if not parsed:
+                        logger.warning("Empty language pack content")
+                        return None
 
-            parsed = yaml.load(content)
-            if not parsed:
-                logger.warning("Empty language pack content")
-                return None
+                    match parsed:
+                        case dict() if all(isinstance(k, str) for k in parsed.keys()):
+                            return parsed
+                        case dict() if "strings" in parsed:
+                            return parsed["strings"]
+                        case dict() if all(
+                            isinstance(k, str) and isinstance(v, dict)
+                            for k, v in parsed.items()
+                        ):
+                            return parsed
+                        case _:
+                            logger.warning("Unsupported language pack structure")
+                            return None
+                case _:
+                    logger.error(f"Unsupported format: {suffix}")
+                    return None
 
-            if isinstance(parsed, dict) and all(
-                isinstance(key, str) and len(key) == 2 for key in parsed.keys()
-            ):
-                return self._process_multi_language_pack(parsed, prefix)
-
-            return self._process_single_language_pack(parsed, prefix)
-
-        except (json.JSONDecodeError, yaml.YAMLError) as e:
-            logger.error("Failed to parse language pack: %s", e)
+        except json.JSONDecodeError as e:
+            logger.error("JSON parsing error: %s", e)
             return None
         except Exception as e:
-            logger.exception("Unexpected error parsing language pack: %s", e)
+            logger.exception("Error parsing language pack: %s", e)
             return None
 
     def _process_multi_language_pack(

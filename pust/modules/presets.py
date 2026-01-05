@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -136,23 +136,32 @@ class Presets(loader.Module):
     async def _menu(self):
         await self.inline.bot.send_photo(
             self._client.tg_id,
-            'https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/Pust/presets_cmd.png',
-            caption=self.strings('welcome'),
+            "https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/Pust/presets_cmd.png",
+            caption=self.strings("welcome"),
             reply_markup=self.inline.generate_markup(self._markup),
         )
 
     async def _back(self, call: InlineCall):
         await call.edit(self.strings("welcome"), reply_markup=self._markup)
 
-    async def _choose_menu(self, call: InlineCall, page: int = 0, preset: str = "", to_remove: list | None = None):
+    async def _choose_menu(
+        self,
+        call: InlineCall,
+        page: int = 0,
+        preset: str = "",
+        to_remove: list | None = None,
+    ):
         if not preset:
             return
         to_remove = to_remove or []
-        to_buttons = [(indx, link) for indx, link in enumerate(PRESETS[preset]) if not self._is_installed(link)]
+        to_buttons = [
+            (indx, link)
+            for indx, link in enumerate(PRESETS[preset])
+            if not self._is_installed(link)
+        ]
         to_install = PRESETS[preset].copy()
         for index in sorted(to_remove, reverse=True):
             to_install.pop(index)
-
 
         kb = []
         for mod_row in utils.chunks(
@@ -213,7 +222,10 @@ class Presets(loader.Module):
                                         (
                                             f"<s>{link.rsplit('/', maxsplit=1)[1].split('.')[0]}</s>"
                                             if link not in to_install
-                                            else link.rsplit('/', maxsplit=1)[1].split('.')[0]),
+                                            else link.rsplit("/", maxsplit=1)[1].split(
+                                                "."
+                                            )[0]
+                                        ),
                                     ),
                                     int(self._is_installed(link)),
                                 )
@@ -227,14 +239,20 @@ class Presets(loader.Module):
             ),
             reply_markup=kb,
         )
-        
 
-    async def _switch(self, call: InlineCall, page: int, preset: str, index_of_module: int, to_remove: list):
+    async def _switch(
+        self,
+        call: InlineCall,
+        page: int,
+        preset: str,
+        index_of_module: int,
+        to_remove: list,
+    ):
         if index_of_module in to_remove:
             to_remove.remove(index_of_module)
         else:
             to_remove.append(index_of_module)
-        
+
         await self._choose_menu(call, page, preset, to_remove)
 
     async def _install(self, call: InlineCall, preset: str, modules: list):
@@ -305,7 +323,10 @@ class Presets(loader.Module):
                 {
                     "text": self.strings("install"),
                     "callback": self._choose_menu,
-                    "args": (0, preset,),
+                    "args": (
+                        0,
+                        preset,
+                    ),
                 },
             ],
         )
@@ -316,12 +337,18 @@ class Presets(loader.Module):
 
         await self._menu()
 
-    @loader.command(ru_doc='| Пакеты модулей для загрузки', ua_doc='| Пакети модулів для завантаження', de_doc='| Pakete mit Modulen zum Laden')
+    @loader.command(
+        ru_doc="| Пакеты модулей для загрузки",
+        ua_doc="| Пакети модулів для завантаження",
+        de_doc="| Pakete mit Modulen zum Laden",
+    )
     async def presets(self, message: Message):
         """| Packs of modules to load"""
         await self.inline.form(
             message=message,
-            photo='https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/Pust/presets_cmd.png',
-            text=self.strings('welcome').replace('/presets', self.get_prefix() + 'presets'),
+            photo="https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/Pust/presets_cmd.png",
+            text=self.strings("welcome").replace(
+                "/presets", self.get_prefix() + "presets"
+            ),
             reply_markup=self._markup,
         )

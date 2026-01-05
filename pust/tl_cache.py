@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pustserbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -20,27 +20,28 @@ import copy
 import inspect
 import logging
 import time
-import typing
 from contextlib import suppress
+from enum import StrEnum, IntEnum
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Set, Union
 
-from Pust import TelegramClient, helpers
-from Pust._updates import (
+from telethon import TelegramClient, helpers
+from telethon._updates import (
     ChannelState,
     EntityType,
     SessionState,
 )
-from Pust._updates import (
+from telethon._updates import (
     Entity as TL_Entity,
 )
-from Pust.errors.rpcerrorlist import TopicDeletedError
-from Pust.hints import EntityLike
-from Pust.network import MTProtoSender
-from Pust.tl import functions
-from Pust.tl.alltlobjects import LAYER
-from Pust.tl.functions.channels import GetFullChannelRequest
-from Pust.tl.functions.users import GetFullUserRequest
-from Pust.tl.tlobject import TLRequest
-from Pust.tl.types import (
+from telethon.errors.rpcerrorlist import TopicDeletedError
+from telethon.hints import EntityLike
+from telethon.network import MTProtoSender
+from telethon.tl import functions
+from telethon.tl.alltlobjects import LAYER
+from telethon.tl.functions.channels import GetFullChannelRequest
+from telethon.tl.functions.users import GetFullUserRequest
+from telethon.tl.tlobject import TLRequest
+from telethon.tl.types import (
     ChannelFull,
     Message,
     Updates,
@@ -48,7 +49,7 @@ from Pust.tl.types import (
     UpdateShort,
     UserFull,
 )
-from Pust.utils import is_list_like
+from telethon.utils import is_list_like
 
 from .types import (
     CacheRecordEntity,
@@ -60,12 +61,31 @@ from .types import (
 
 logger = logging.getLogger(__name__)
 
-# Constants
+
+class CacheType(StrEnum):
+    """Cache type enumeration"""
+
+    ENTITY = "entity"
+    FULL_CHANNEL = "full_channel"
+    FULL_USER = "full_user"
+    PERMISSIONS = "permissions"
+    MESSAGE = "message"
+
+
+class CacheStatus(IntEnum):
+    """Cache status enumeration"""
+
+    ACTIVE = 1
+    EXPIRED = 2
+    INVALID = 3
+    UPDATING = 4
+
+
 _ID_ATTRIBUTES = {"user_id", "channel_id", "chat_id", "id"}
 _CACHE_EXPIRY = 5 * 60  # 5 minutes
 
 
-def _is_hashable(value: typing.Any) -> bool:
+def _is_hashable(value: Any) -> bool:
     """Check if a value can be used as a dictionary key.
 
     Args:
@@ -81,7 +101,7 @@ def _is_hashable(value: typing.Any) -> bool:
         return False
 
 
-def _get_hashable_entity(entity: typing.Any) -> typing.Optional[typing.Union[int, str]]:
+def _get_hashable_entity(entity: Any) -> Optional[Union[int, str]]:
     """Extract a hashable identifier from an entity object.
 
     Args:
@@ -102,7 +122,7 @@ def _get_hashable_entity(entity: typing.Any) -> typing.Optional[typing.Union[int
     return None
 
 
-def _normalize_entity_id(entity_id: typing.Union[str, int]) -> typing.Union[str, int]:
+def _normalize_entity_id(entity_id: Union[str, int]) -> Union[str, int]:
     """Normalize entity ID by removing prefixes for negative IDs.
 
     Args:
@@ -112,7 +132,6 @@ def _normalize_entity_id(entity_id: typing.Union[str, int]) -> typing.Union[str,
         Normalized entity ID
     """
     if isinstance(entity_id, str) and entity_id.isdigit() and int(entity_id) < 0:
-        # Remove prefixes like -100 for supergroups/channels
         return int(entity_id[4:])
     return entity_id
 
@@ -142,32 +161,32 @@ class CustomTelegramClient(TelegramClient):
         """
         super().__init__(*args, **kwargs)
 
-        self._Pustntity_cache: typing.Dict[
-            typing.Union[str, int],
+        self._Pustntity_cache: Dict[
+            Union[str, int],
             CacheRecordEntity,
         ] = {}
 
-        self._Pusterms_cache: typing.Dict[
-            typing.Union[str, int],
-            typing.Dict[typing.Union[str, int], CacheRecordPerms],
+        self._Pusterms_cache: Dict[
+            Union[str, int],
+            Dict[Union[str, int], CacheRecordPerms],
         ] = {}
 
-        self._Pustullchannel_cache: typing.Dict[
-            typing.Union[str, int],
+        self._Pustullchannel_cache: Dict[
+            Union[str, int],
             CacheRecordFullChannel,
         ] = {}
 
-        self._Pustulluser_cache: typing.Dict[
-            typing.Union[str, int],
+        self._Pustulluser_cache: Dict[
+            Union[str, int],
             CacheRecordFullUser,
         ] = {}
 
-        self._forbidden_constructors: typing.Set[int] = set()
-        self._raw_updates_processor: typing.Optional[
-            typing.Callable[[typing.Union[Updates, UpdatesCombined, UpdateShort]], None]
+        self._forbidden_constructors: Set[int] = set()
+        self._raw_updates_processor: Optional[
+            Callable[[Union[Updates, UpdatesCombined, UpdateShort]], None]
         ] = None
 
-    async def connect(self, unix_socket_path: typing.Optional[str] = None) -> None:
+    async def connect(self, unix_socket_path: Optional[str] = None) -> None:
         """Connect the client to Telegram servers.
 
         Args:
@@ -269,9 +288,7 @@ class CustomTelegramClient(TelegramClient):
     @property
     def raw_updates_processor(
         self,
-    ) -> typing.Optional[
-        typing.Callable[[typing.Union[Updates, UpdatesCombined, UpdateShort]], None]
-    ]:
+    ) -> Optional[Callable[[Union[Updates, UpdatesCombined, UpdateShort]], None]]:
         """Get the raw updates processor callback.
 
         Returns:
@@ -282,9 +299,7 @@ class CustomTelegramClient(TelegramClient):
     @raw_updates_processor.setter
     def raw_updates_processor(
         self,
-        value: typing.Callable[
-            [typing.Union[Updates, UpdatesCombined, UpdateShort]], None
-        ],
+        value: Callable[[Union[Updates, UpdatesCombined, UpdateShort]], None],
     ) -> None:
         """Set the raw updates processor callback.
 
@@ -303,7 +318,7 @@ class CustomTelegramClient(TelegramClient):
         self._raw_updates_processor = value
 
     @property
-    def Pustntity_cache(self) -> typing.Dict[int, CacheRecordEntity]:
+    def Pustntity_cache(self) -> Dict[int, CacheRecordEntity]:
         """Get the entity cache.
 
         Returns:
@@ -314,7 +329,7 @@ class CustomTelegramClient(TelegramClient):
     @property
     def Pusterms_cache(
         self,
-    ) -> typing.Dict[int, typing.Dict[int, CacheRecordPerms]]:
+    ) -> Dict[int, Dict[int, CacheRecordPerms]]:
         """Get the permissions cache.
 
         Returns:
@@ -323,7 +338,7 @@ class CustomTelegramClient(TelegramClient):
         return self._Pusterms_cache
 
     @property
-    def Pustullchannel_cache(self) -> typing.Dict[int, CacheRecordFullChannel]:
+    def Pustullchannel_cache(self) -> Dict[int, CacheRecordFullChannel]:
         """Get the full channel cache.
 
         Returns:
@@ -332,7 +347,7 @@ class CustomTelegramClient(TelegramClient):
         return self._Pustullchannel_cache
 
     @property
-    def Pustulluser_cache(self) -> typing.Dict[int, CacheRecordFullUser]:
+    def Pustulluser_cache(self) -> Dict[int, CacheRecordFullUser]:
         """Get the full user cache.
 
         Returns:
@@ -341,7 +356,7 @@ class CustomTelegramClient(TelegramClient):
         return self._Pustulluser_cache
 
     @property
-    def forbidden_constructors(self) -> typing.List[int]:
+    def forbidden_constructors(self) -> List[int]:
         """Get the list of forbidden constructor IDs.
 
         Returns:
@@ -349,7 +364,7 @@ class CustomTelegramClient(TelegramClient):
         """
         return list(self._forbidden_constructors)
 
-    async def force_get_entity(self, *args, **kwargs) -> typing.Any:
+    async def force_get_entity(self, *args, **kwargs) -> Any:
         """Forcefully fetch an entity from Telegram, bypassing cache.
 
         Args:
@@ -366,7 +381,7 @@ class CustomTelegramClient(TelegramClient):
         entity: EntityLike,
         exp: int = _CACHE_EXPIRY,
         force: bool = False,
-    ) -> typing.Any:
+    ) -> Any:
         """Fetch an entity and cache it for future use.
 
         Args:
@@ -406,8 +421,8 @@ class CustomTelegramClient(TelegramClient):
 
     async def _cache_entity(
         self,
-        entity: typing.Any,
-        hashable_id: typing.Union[str, int],
+        entity: Any,
+        hashable_id: Union[str, int],
         exp: int,
     ) -> None:
         """Cache an entity with multiple lookup keys.
@@ -435,10 +450,10 @@ class CustomTelegramClient(TelegramClient):
     async def get_perms_cached(
         self,
         entity: EntityLike,
-        user: typing.Optional[EntityLike] = None,
+        user: Optional[EntityLike] = None,
         exp: int = _CACHE_EXPIRY,
         force: bool = False,
-    ) -> typing.Any:
+    ) -> Any:
         """Fetch user permissions in an entity and cache them.
 
         Args:
@@ -495,11 +510,11 @@ class CustomTelegramClient(TelegramClient):
 
     async def _cache_perms(
         self,
-        entity_obj: typing.Any,
-        user_obj: typing.Any,
-        hashable_entity: typing.Union[str, int],
-        hashable_user: typing.Union[str, int],
-        perms: typing.Any,
+        entity_obj: Any,
+        user_obj: Any,
+        hashable_entity: Union[str, int],
+        hashable_user: Union[str, int],
+        perms: Any,
         exp: int,
     ) -> None:
         """Cache permissions with multiple lookup keys.
@@ -519,15 +534,13 @@ class CustomTelegramClient(TelegramClient):
         )
         logger.debug("Saved permissions for entity %s to cache", hashable_entity)
 
-        def _add_to_cache(key: typing.Union[str, int]) -> None:
+        def _add_to_cache(key: Union[str, int]) -> None:
             if hasattr(user_obj, "id"):
                 self._Pusterms_cache.setdefault(key, {})[user_obj.id] = cache_record
 
             if hasattr(user_obj, "username") and user_obj.username:
                 username_key = f"@{user_obj.username}"
-                self._Pusterms_cache.setdefault(key, {})[username_key] = (
-                    cache_record
-                )
+                self._Pusterms_cache.setdefault(key, {})[username_key] = cache_record
                 self._Pusterms_cache.setdefault(key, {})[user_obj.username] = (
                     cache_record
                 )
@@ -629,7 +642,7 @@ class CustomTelegramClient(TelegramClient):
     def _find_message_in_frame(
         chat_id: int,
         frame: inspect.FrameInfo,
-    ) -> typing.Optional[Message]:
+    ) -> Optional[Message]:
         """Find a message object in a stack frame.
 
         Args:
@@ -658,8 +671,8 @@ class CustomTelegramClient(TelegramClient):
     async def _find_message_in_stack(
         self,
         chat: EntityLike,
-        stack: typing.List[inspect.FrameInfo],
-    ) -> typing.Optional[Message]:
+        stack: List[inspect.FrameInfo],
+    ) -> Optional[Message]:
         """Find a message object in the call stack.
 
         Args:
@@ -688,8 +701,8 @@ class CustomTelegramClient(TelegramClient):
     async def _find_topic_in_stack(
         self,
         chat: EntityLike,
-        stack: typing.List[inspect.FrameInfo],
-    ) -> typing.Optional[int]:
+        stack: List[inspect.FrameInfo],
+    ) -> Optional[int]:
         """Find topic ID in the call stack.
 
         Args:
@@ -710,8 +723,8 @@ class CustomTelegramClient(TelegramClient):
 
     async def _topic_guesser(
         self,
-        native_method: typing.Callable[..., typing.Awaitable[Message]],
-        stack: typing.List[inspect.FrameInfo],
+        native_method: Callable[..., Awaitable[Message]],
+        stack: List[inspect.FrameInfo],
         *args,
         **kwargs,
     ) -> Message:
@@ -783,8 +796,8 @@ class CustomTelegramClient(TelegramClient):
         sender: MTProtoSender,
         request: TLRequest,
         ordered: bool = False,
-        flood_sleep_threshold: typing.Optional[int] = None,
-    ) -> typing.Any:
+        flood_sleep_threshold: Optional[int] = None,
+    ) -> Any:
         """Execute a request with forbidden constructor protection.
 
         ⚠️ WARNING! If you are a module developer and try to bypass this protection
@@ -850,7 +863,7 @@ class CustomTelegramClient(TelegramClient):
 
         return False
 
-    def _internal_forbid_ctor(self, constructors: typing.List[int]) -> None:
+    def _internal_forbid_ctor(self, constructors: List[int]) -> None:
         """Internal method to forbid constructor IDs.
 
         Args:
@@ -866,7 +879,7 @@ class CustomTelegramClient(TelegramClient):
         """
         self._internal_forbid_ctor([constructor])
 
-    def forbid_constructors(self, constructors: typing.List[int]) -> None:
+    def forbid_constructors(self, constructors: List[int]) -> None:
         """Forbid multiple constructors from being called.
 
         Args:
@@ -876,7 +889,7 @@ class CustomTelegramClient(TelegramClient):
 
     def _handle_update(
         self,
-        update: typing.Union[Updates, UpdatesCombined, UpdateShort],
+        update: Union[Updates, UpdatesCombined, UpdateShort],
     ) -> None:
         """Handle update with custom processor.
 

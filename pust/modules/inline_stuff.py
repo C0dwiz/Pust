@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -19,12 +19,13 @@
 import re
 import string
 
-from Pusttl.errors.rpcerrorlist import YouBlockedUserError
-from Pusttl.tl.functions.contacts import UnblockRequest
-from Pusttl.tl.types import Message
+from telethon.errors.rpcerrorlist import YouBlockedUserError
+from telethon.tl.functions.contacts import UnblockRequest
+from telethon.tl.types import Message
 
 from .. import loader, utils
 from ..inline.types import BotInlineMessage, InlineCall
+
 
 @loader.tds
 class InlineStuff(loader.Module):
@@ -123,8 +124,8 @@ class InlineStuff(loader.Module):
     @loader.command()
     async def ch_bot_token(self, message: Message):
         args = utils.get_args_raw(message)
-        if not args or not re.match(r'[0-9]{8,10}:[a-zA-Z0-9_-]{34,36}', args):
-            await utils.answer(message, self.strings('token_invalid'))
+        if not args or not re.match(r"[0-9]{8,10}:[a-zA-Z0-9_-]{34,36}", args):
+            await utils.answer(message, self.strings("token_invalid"))
             return
         self._db.set("Pust.inline", "bot_token", args)
         await utils.answer(message, self.strings("bot_updated"))
@@ -140,31 +141,35 @@ class InlineStuff(loader.Module):
             )
 
         if message.text == "/profile":
-            
             if message.from_user.id != self.client.tg_id:
                 await message.answer("❌ You are not allowed to use this")
             else:
                 await message.answer_photo(
                     "https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/Pust/start_cmd.png",
-                    caption = self.strings["profile_cmd"].format(prefix=self.get_prefix(),ram_usage=utils.get_ram_usage(),cpu_usage=utils.get_cpu_usage(),host=utils.get_named_platform()), 
-                    reply_markup = self.inline.generate_markup(
+                    caption=self.strings["profile_cmd"].format(
+                        prefix=self.get_prefix(),
+                        ram_usage=utils.get_ram_usage(),
+                        cpu_usage=utils.get_cpu_usage(),
+                        host=utils.get_named_platform(),
+                    ),
+                    reply_markup=self.inline.generate_markup(
                         markup_obj=[
                             [
                                 {
-                                    "text": "🚀 Restart", 
-                                    "callback": self.restart, 
-                                    "args": (message,)
+                                    "text": "🚀 Restart",
+                                    "callback": self.restart,
+                                    "args": (message,),
                                 }
                             ],
                             [
                                 {
-                                    "text": "⚠️ Reset prefix", 
+                                    "text": "⚠️ Reset prefix",
                                     "callback": self.reset_prefix,
-                                    "args": (message,)
+                                    "args": (message,),
                                 }
-                            ]
+                            ],
                         ]
-                    )
+                    ),
                 )
 
     async def restart(self, call: InlineCall, message):

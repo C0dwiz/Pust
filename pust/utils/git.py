@@ -1,6 +1,6 @@
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -14,10 +14,11 @@ import logging
 import typing
 
 import git
-import Pusttl
+import telethon
 
-parser = Pusttl.utils.sanitize_parse_mode("html")
+parser = telethon.utils.sanitize_parse_mode("html")
 logger = logging.getLogger(__name__)
+
 
 # GeekTG Compatibility
 def get_git_info() -> typing.Tuple[str, str]:
@@ -28,12 +29,14 @@ def get_git_info() -> typing.Tuple[str, str]:
     hash_ = get_git_hash()
     return (
         hash_,
-        f"https://github.com/coddrago/Pust/commit/{hash_}" if hash_ else "",
+        f"https://github.com/coddrago/Heroku/commit/{hash_}" if hash_ else "",
     )
 
-def get_git_hash() -> typing.Union[str, bool]:
+
+def get_git_hash() -> str | bool:
     """
     Get current Pust git hash
+
     :return: Git commit hash
     """
     try:
@@ -49,6 +52,6 @@ def get_commit_url() -> str:
     """
     try:
         hash_ = get_git_hash()
-        return f'<a href="https://github.com/coddrago/Pust/commit/{hash_}">#{hash_[:7]}</a>'
+        return f'<a href="https://github.com/coddrago/Heroku/commit/{hash_}">#{hash_[:7]}</a>'
     except Exception:
         return "Unknown"

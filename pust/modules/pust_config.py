@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -22,8 +22,8 @@ import functools
 import typing
 from math import ceil
 
-from Pusttl.tl.types import Message
-from Pusttl.extensions import html
+from telethon.tl.types import Message
+from telethon.extensions import html
 
 from .. import loader, translations, utils
 from ..inline.types import InlineCall
@@ -533,7 +533,9 @@ class PustConfigMod(loader.Module):
             )
             return
 
-        await self.inline__configure_option(call, mod=mod, config_opt=option, force_hidden=False, obj_type=obj_type)
+        await self.inline__configure_option(
+            call, mod=mod, config_opt=option, force_hidden=False, obj_type=obj_type
+        )
         await call.answer("✅")
 
     def _generate_choice_markup(
@@ -708,7 +710,12 @@ class PustConfigMod(loader.Module):
                         {
                             "text": self.strings("hide_value"),
                             "callback": self.inline__configure_option,
-                            "kwargs": {"obj_type": obj_type, "mod": mod, "config_opt": config_opt, "force_hidden": False},
+                            "kwargs": {
+                                "obj_type": obj_type,
+                                "mod": mod,
+                                "config_opt": config_opt,
+                                "force_hidden": False,
+                            },
                         }
                     ]
                 ]
@@ -718,7 +725,12 @@ class PustConfigMod(loader.Module):
                         {
                             "text": self.strings("show_hidden"),
                             "callback": self.inline__configure_option,
-                            "kwargs": {"obj_type": obj_type, "mod": mod, "config_opt": config_opt, "force_hidden": True},
+                            "kwargs": {
+                                "obj_type": obj_type,
+                                "mod": mod,
+                                "config_opt": config_opt,
+                                "force_hidden": True,
+                            },
                         }
                     ]
                 ]
@@ -800,24 +812,26 @@ class PustConfigMod(loader.Module):
                     ),
                 )
                 return
-            
+
         text = self.strings(
-                "configuring_option"
-                if isinstance(obj_type, bool)
-                else "configuring_option_lib"
-            ).format(*args)
-        
+            "configuring_option"
+            if isinstance(obj_type, bool)
+            else "configuring_option_lib"
+        ).format(*args)
+
         if len(text) > 4096:
             additonal_button_row += self.inline.build_pagination(
                 callback=functools.partial(
-                    self.inline__configure_option, mod=mod, config_opt=config_opt, force_hidden=force_hidden, obj_type=obj_type
+                    self.inline__configure_option,
+                    mod=mod,
+                    config_opt=config_opt,
+                    force_hidden=force_hidden,
+                    obj_type=obj_type,
                 ),
                 total_pages=ceil(len(text) / 4096),
                 current_page=page + 1,
             )
-            text = list(utils.smart_split(
-                *html.parse(text)
-            ))[page]
+            text = list(utils.smart_split(*html.parse(text)))[page]
 
         await call.edit(
             text,
@@ -882,12 +896,11 @@ class PustConfigMod(loader.Module):
                                 else (
                                     list(
                                         utils.smart_split(
-                                            *html.parse(self._get_value(mod, key)),
-                                            200
-                                            )
-                                        )[0] +
-                                    "..."
-                                    )
+                                            *html.parse(self._get_value(mod, key)), 200
+                                        )
+                                    )[0]
+                                    + "..."
+                                )
                             ),
                         )
                         for key in self.lookup(mod).config
@@ -1009,8 +1022,14 @@ class PustConfigMod(loader.Module):
     async def configcmd(self, message: Message):
         args = utils.get_args_raw(message)
         args_s = args.split()
-        if len(args_s) == 1 and self.lookup(args_s[0]) and hasattr(self.lookup(args_s[0]), 'config'):
-            form = await self.inline.form(self.config["cfg_emoji"], message, silent=True)
+        if (
+            len(args_s) == 1
+            and self.lookup(args_s[0])
+            and hasattr(self.lookup(args_s[0]), "config")
+        ):
+            form = await self.inline.form(
+                self.config["cfg_emoji"], message, silent=True
+            )
             mod = self.lookup(args)
             if isinstance(mod, loader.Library):
                 type_ = "library"
@@ -1020,8 +1039,14 @@ class PustConfigMod(loader.Module):
             await self.inline__configure(form, args, obj_type=type_)
             return
 
-        if len(args_s) == 2 and self.lookup(args_s[0]) and hasattr(self.lookup(args_s[0]), 'config'):
-            form = await self.inline.form(self.config["cfg_emoji"], message, silent=True)
+        if (
+            len(args_s) == 2
+            and self.lookup(args_s[0])
+            and hasattr(self.lookup(args_s[0]), "config")
+        ):
+            form = await self.inline.form(
+                self.config["cfg_emoji"], message, silent=True
+            )
             mod = self.lookup(args_s[0])
             if isinstance(mod, loader.Library):
                 type_ = "library"
@@ -1029,7 +1054,9 @@ class PustConfigMod(loader.Module):
                 type_ = mod.__origin__.startswith("<core")
 
             if args_s[1] in mod.config.keys():
-                await self.inline__configure_option(form, mod=args_s[0], config_opt=args_s[1], obj_type=type_)
+                await self.inline__configure_option(
+                    form, mod=args_s[0], config_opt=args_s[1], obj_type=type_
+                )
             else:
                 await self.inline__configure(form, args, obj_type=type_)
             return

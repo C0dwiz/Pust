@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -21,10 +21,9 @@ import difflib
 import inspect
 import logging
 
-from Pusttl.extensions.html import CUSTOM_EMOJIS
-from Pusttl.tl.types import Message
+from telethon.tl.types import Message
 
-from .. import loader, utils
+from .. import loader, utils, main
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +63,11 @@ class Help(loader.Module):
             ),
         )
 
-    @loader.command(ru_doc="[args] | Спрячет ваши модули", ua_doc="[args] | Сховає ваші модулі", de_doc="[args] | Versteckt Ihre Module")
+    @loader.command(
+        ru_doc="[args] | Спрячет ваши модули",
+        ua_doc="[args] | Сховає ваші модулі",
+        de_doc="[args] | Versteckt Ihre Module",
+    )
     async def helphide(self, message: Message):
         """[args] | hide your modules"""
         if not (modules := utils.get_args(message)):
@@ -154,9 +157,7 @@ class Help(loader.Module):
         )
 
         reply = "{} <b>{}</b>:".format(
-            "<emoji document_id=5134452506935427991>🪐</emoji>",
-            _name,
-            ""
+            "<emoji document_id=5134452506935427991>🪐</emoji>", _name, ""
         )
         inline_cmd = ""
         cmds = ""
@@ -168,12 +169,7 @@ class Help(loader.Module):
             )
 
         if isinstance(self.lookup(args), loader.Library):
-            return await utils.answer(
-                message,
-                self.strings["help_lib"].format(
-                    name
-                )
-            )
+            return await utils.answer(message, self.strings["help_lib"].format(name))
 
         commands = {
             name: func
@@ -198,8 +194,7 @@ class Help(loader.Module):
         lines = []
         for name, fun in commands.items():
             lines.append(
-                f'{self.config["command_emoji"]}'
-                " <code>{}{}</code>{} {}".format(
+                f"{self.config['command_emoji']} <code>{{}}{{}}</code>{{}} {{}}".format(
                     utils.escape_html(self.get_prefix()),
                     name,
                     (
@@ -226,7 +221,7 @@ class Help(loader.Module):
 
         await utils.answer(
             message,
-            f'{reply}<blockquote expandable>{cmds}{inline_cmd}</blockquote>'
+            f"{reply}<blockquote expandable>{cmds}{inline_cmd}</blockquote>"
             + (f"\n\n{self.strings('not_exact')}" if not exact else "")
             + (
                 f"\n\n{self.strings('core_notice')}"
@@ -235,7 +230,11 @@ class Help(loader.Module):
             ),
         )
 
-    @loader.command(ru_doc="[args] | Помощь с вашими модулями!", ua_doc="[args] | допоможіть з вашими модулями!", de_doc="[args] | Hilfe mit deinen Modulen!")
+    @loader.command(
+        ru_doc="[args] | Помощь с вашими модулями!",
+        ua_doc="[args] | допоможіть з вашими модулями!",
+        de_doc="[args] | Hilfe mit deinen Modulen!",
+    )
     async def help(self, message: Message):
         """[args] | help with your modules!"""
         args = utils.get_args_raw(message)
@@ -347,7 +346,10 @@ class Help(loader.Module):
 
         await utils.answer(
             message,
-            (self.config["desc_icon"] + " {}\n <blockquote expandable>{}</blockquote><blockquote expandable>{}</blockquote><blockquote expandable>{}</blockquote>").format(
+            (
+                self.config["desc_icon"]
+                + " {}\n <blockquote expandable>{}</blockquote><blockquote expandable>{}</blockquote><blockquote expandable>{}</blockquote>"
+            ).format(
                 reply,
                 "".join(core_),
                 "".join(plain_ + (no_commands_ if force else [])),
@@ -359,10 +361,14 @@ class Help(loader.Module):
             ),
         )
 
-    @loader.command(ru_doc="| Ссылка на чат помощи", ua_doc="| посилання для чату служби підтримки", de_doc="| Link zum Support-Chat")
+    @loader.command(
+        ru_doc="| Ссылка на чат помощи",
+        ua_doc="| посилання для чату служби підтримки",
+        de_doc="| Link zum Support-Chat",
+    )
     async def support(self, message):
         """| link for support chat"""
-       
+
         await utils.answer(
             message,
             self.strings("offchats"),

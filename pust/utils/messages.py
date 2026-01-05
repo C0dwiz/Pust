@@ -1,7 +1,6 @@
-
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -19,8 +18,8 @@ import re
 import typing
 
 import grapheme
-import Pusttl
-from Pusttl.tl.types import (
+import telethon
+from telethon.tl.types import (
     Channel,
     Chat,
     InputDocument,
@@ -37,7 +36,6 @@ from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 from ..types import PustReplyMarkup, ListLike
 
 
-
 emoji_pattern = re.compile(
     "["
     "\U0001f600-\U0001f64f"  # emoticons
@@ -48,8 +46,9 @@ emoji_pattern = re.compile(
     flags=re.UNICODE,
 )
 
-parser = Pusttl.utils.sanitize_parse_mode("html")
+parser = telethon.utils.sanitize_parse_mode("html")
 logger = logging.getLogger(__name__)
+
 
 def get_topic(message: Message) -> typing.Optional[int]:
     """
@@ -71,6 +70,7 @@ def get_topic(message: Message) -> typing.Optional[int]:
         )
     )
 
+
 def mime_type(message: Message) -> str:
     """
     Get mime type of document in message
@@ -82,6 +82,7 @@ def mime_type(message: Message) -> str:
         if not isinstance(message, Message) or not getattr(message, "media", False)
         else getattr(getattr(message, "media", False), "mime_type", False) or ""
     )
+
 
 async def get_message_link(
     message: Message,
@@ -134,7 +135,7 @@ def smart_split(
 
     :example:
         >>> utils.smart_split(
-            *Pusttl.extensions.html.parse(
+            *telethon.extensions.html.parse(
                 "<b>Hello, world!</b>"
             )
         )
@@ -276,6 +277,7 @@ def array_sum(
 
     return result
 
+
 async def answer(
     message: typing.Union[Message, InlineCall, InlineMessage],
     response: str,
@@ -344,7 +346,7 @@ async def answer(
     elif "reply_to" in kwargs:
         kwargs.pop("reply_to")
 
-    parse_mode = Pusttl.utils.sanitize_parse_mode(
+    parse_mode = telethon.utils.sanitize_parse_mode(
         kwargs.pop(
             "parse_mode",
             message.client.parse_mode,
@@ -398,7 +400,11 @@ async def answer(
         )
     elif isinstance(response, Message):
         if message.media is None and (
-            response.media is None or isinstance(response.media, (MessageMediaWebPage, MessageMediaPhoto, MessageMediaDocument))
+            response.media is None
+            or isinstance(
+                response.media,
+                (MessageMediaWebPage, MessageMediaPhoto, MessageMediaDocument),
+            )
         ):
             result = await message.edit(
                 response.message,
@@ -480,6 +486,7 @@ async def answer_file(
 
     return response
 
+
 def censor(
     obj: typing.Any,
     to_censor: typing.Optional[typing.Iterable[str]] = None,
@@ -502,6 +509,7 @@ def censor(
             setattr(obj, k, censor(v, to_censor, replace_with))
 
     return obj
+
 
 def is_serializable(x: typing.Any, /) -> bool:
     """

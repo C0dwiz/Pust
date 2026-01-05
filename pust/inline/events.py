@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -172,7 +172,9 @@ class Events(InlineUnit):
                                                 res.get("caption")
                                             ),
                                             parse_mode="HTML",
-                                            thumbnail_url=res.get("thumb", res["video"]),
+                                            thumbnail_url=res.get(
+                                                "thumb", res["video"]
+                                            ),
                                             video_url=res["video"],
                                             mime_type="video/mp4",
                                             reply_markup=self.generate_markup(
@@ -458,7 +460,9 @@ class Events(InlineUnit):
                         title=self.translator.getkey("inline.show_inline_cmds"),
                         description=self.translator.getkey("inline.no_inline_cmds"),
                         input_message_content=InputTextMessageContent(
-                            message_text=self.translator.getkey("inline.no_inline_cmds_msg"),
+                            message_text=self.translator.getkey(
+                                "inline.no_inline_cmds_msg"
+                            ),
                             parse_mode="HTML",
                             disable_web_page_preview=True,
                         ),

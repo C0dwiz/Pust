@@ -1,24 +1,36 @@
-@import "https://fonts.googleapis.com/css2?family=Josefin+Sans&family=Open+Sans:wght@300&display=swap";
-@import "https://fonts.googleapis.com/css2?family=Hubballi&display=swap";
+/* Modern CSS with optimized performance */
+@import url("https://fonts.googleapis.com/css2?family=Josefin+Sans&family=Open+Sans:wght@300&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Hubballi&display=swap");
 
+/* Font face with modern format support */
 @font-face {
     font-family: "Movement";
-    src: url(/static/Movement.ttf) format("truetype");
+    src: url("/static/Movement.ttf") format("truetype");
+    font-display: swap; /* Performance optimization */
 }
 
-body,
+/* CSS Reset and base styles */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 html {
+    scroll-behavior: smooth;
+}
+
+body {
     background: #111;
     width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
+    font-family: Hubballi, sans-serif;
+    line-height: 1.6;
 }
 
-body {
-    font-family: Hubballi;
-}
-
+/* Background layers with GPU acceleration */
 .bg {
     width: 100%;
     height: 100%;
@@ -27,6 +39,7 @@ body {
     position: fixed;
     z-index: -2;
     background: #111;
+    will-change: transform; /* GPU optimization */
 }
 
 .bg_inner {
@@ -46,6 +59,28 @@ body {
     background: #077958;
     filter: blur(100px);
     transition: background-color 0.5s ease;
+    will-change: background-color, transform; /* GPU optimization */
+}
+
+/* Optimized animations */
+@keyframes fadein {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
 }
 
 @keyframes fadein {

@@ -24,7 +24,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -43,12 +43,12 @@ import logging
 import re
 import sys
 import traceback
-import typing
+from typing import Callable, List, Tuple, Union, NoReturn
 
 import requests
-from Pusttl import events
-from Pusttl.errors import FloodWaitError, RPCError
-from Pusttl.tl.types import Message
+from telethon import events
+from telethon.errors import FloodWaitError, RPCError
+from telethon.tl.types import Message
 
 from . import main, security, utils
 from .database import Database
@@ -57,7 +57,6 @@ from .tl_cache import CustomTelegramClient
 
 logger = logging.getLogger(__name__)
 
-# Keys for layout switch
 ru_keys = 'ёйцукенгшщзхъфывапролджэячсмитьбю.Ё"№;%:?ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭ/ЯЧСМИТЬБЮ,'
 en_keys = "`qwertyuiop[]asdfghjkl;'zxcvbnm,./~@#$%^&QWERTYUIOP{}ASDFGHJKL:\"|ZXCVBNM<>?"
 ALL_TAGS = [
@@ -144,16 +143,17 @@ class CommandDispatcher:
 
         self._cached_usernames.extend(
             u.username.lower()
-            for u in getattr(self._client.Pust_me, "usernames", [])
-            or []
+            for u in getattr(self._client.Pust_me, "usernames", []) or []
         )
 
         self.raw_handlers = []
-        self._external_bl: typing.List[int] = []
+        self._external_bl: List[int] = []
 
         ensure_future(self._external_bl_reload_loop())
 
-    def _handle_ratelimit(self, message: Message, func: typing.Callable[..., typing.NoReturn]) -> bool:
+    def _handle_ratelimit(
+        self, message: Message, func: Callable[..., NoReturn]
+    ) -> bool:
         if self.security.check(message, security.OWNER):
             return True
 
@@ -199,7 +199,6 @@ class CommandDispatcher:
         return ret
 
     def _handle_grep(self, message: Message) -> Message:
-        # Allow escaping grep with double stick
         if "||grep" in message.text or "|| grep" in message.text:
             message.raw_text = re.sub(r"\|\| ?grep", "| grep", message.raw_text)
             message.text = re.sub(r"\|\| ?grep", "| grep", message.text)
@@ -285,9 +284,9 @@ class CommandDispatcher:
 
     async def _handle_command(
         self,
-        event: typing.Union[events.NewMessage, events.MessageDeleted],
+        event: Union[events.NewMessage, events.MessageDeleted],
         watcher: bool = False,
-    ) -> typing.Union[bool, typing.Tuple[Message, str, str, callable]]:
+    ) -> Union[bool, Tuple[Message, str, str, callable]]:
         if not hasattr(event, "message") or not hasattr(event.message, "message"):
             return False
 
@@ -299,7 +298,7 @@ class CommandDispatcher:
         else:
             prefix = self._db.get(main.__name__, "command_prefixes", {})
             prefix = prefix.get(str(initiator), main_prefix)
-            
+
         change = str.maketrans(ru_keys + en_keys, en_keys + ru_keys)
         message = utils.censor(event.message)
 
@@ -316,13 +315,12 @@ class CommandDispatcher:
                 and any(s != str.translate(prefix, change) for s in message.message)
             )
         ):
-            # Allow escaping commands using .'s
             if not watcher:
                 await message.edit(
-                    message.message[len(prefix):],
+                    message.message[len(prefix) :],
                     parse_mode=lambda s: (
                         s,
-                         utils.relocate_entities(message.entities, -1, message.message)
+                        utils.relocate_entities(message.entities, -1, message.message)
                         or (),
                     ),
                 )
@@ -367,8 +365,7 @@ class CommandDispatcher:
         if not message.message or len(message.message.strip()) == len(prefix):
             return False  # Message is just the prefix
 
-
-        command = message.message[len(prefix):].strip().split(maxsplit=1)[0]
+        command = message.message[len(prefix) :].strip().split(maxsplit=1)[0]
         tag = command.split("@", maxsplit=1)
 
         if len(tag) == 2:
@@ -424,7 +421,7 @@ class CommandDispatcher:
                         return False
 
                     break
-            
+
             return False
 
         message.message = prefix + txt + message.message[len(prefix + command) :]
@@ -455,7 +452,7 @@ class CommandDispatcher:
 
     async def handle_command(
         self,
-        event: typing.Union[events.NewMessage, events.MessageDeleted],
+        event: Union[events.NewMessage, events.MessageDeleted],
     ):
         """Handle all commands"""
         message = await self._handle_command(event)
@@ -533,14 +530,14 @@ class CommandDispatcher:
 
     async def _handle_tags(
         self,
-        event: typing.Union[events.NewMessage, events.MessageDeleted],
+        event: Union[events.NewMessage, events.MessageDeleted],
         func: callable,
     ) -> bool:
         return bool(await self._handle_tags_ext(event, func))
 
     async def _handle_tags_ext(
         self,
-        event: typing.Union[events.NewMessage, events.MessageDeleted],
+        event: Union[events.NewMessage, events.MessageDeleted],
         func: callable,
     ) -> str:
         """
@@ -642,7 +639,7 @@ class CommandDispatcher:
 
     async def handle_incoming(
         self,
-        event: typing.Union[events.NewMessage, events.MessageDeleted],
+        event: Union[events.NewMessage, events.MessageDeleted],
     ):
         """Handle all incoming messages"""
         message = utils.censor(getattr(event, "message", event))
@@ -669,32 +666,46 @@ class CommandDispatcher:
         for func in self._modules.watchers:
             bl = self._db.get(main.__name__, "disabled_watchers", {})
             modname = str(func.__self__.__class__.strings["name"])
+            chat_id_str = str(chat_id)
+            func_module = f"{chat_id_str}.{func.__self__.__module__}"
+
+            skip_watcher = False
+
+            match (modname in bl, bl.get(modname, [])):
+                case (True, list(bl_rules)):
+                    if not isinstance(message, Message):
+                        skip_watcher = True
+                    else:
+                        match bl_rules:
+                            case rules if "*" in rules:
+                                skip_watcher = True
+                            case rules if chat_id in rules:
+                                skip_watcher = True
+                            case rules if "only_chats" in rules and message.is_private:
+                                skip_watcher = True
+                            case rules if "only_pm" in rules and not message.is_private:
+                                skip_watcher = True
+                            case rules if "out" in rules and not message.out:
+                                skip_watcher = True
+                            case rules if "in" in rules and message.out:
+                                skip_watcher = True
+                            case _:
+                                pass
+                case (True, _):
+                    skip_watcher = True
+                case _:
+                    pass
 
             if (
-                modname in bl
-                and isinstance(message, Message)
-                and (
-                    "*" in bl[modname]
-                    or chat_id in bl[modname]
-                    or "only_chats" in bl[modname]
-                    and message.is_private
-                    or "only_pm" in bl[modname]
-                    and not message.is_private
-                    or "out" in bl[modname]
-                    and not message.out
-                    or "in" in bl[modname]
-                    and message.out
-                )
-                or f"{str(chat_id)}.{func.__self__.__module__}" in blacklist_chats
-                or whitelist_modules
-                and f"{str(chat_id)}.{func.__self__.__module__}"
-                not in whitelist_modules
+                func_module in blacklist_chats
+                or (whitelist_modules and func_module not in whitelist_modules)
                 or await self._handle_tags(event, func)
             ):
+                skip_watcher = True
+
+            if skip_watcher:
                 continue
 
-            # Avoid weird AttributeErrors in weird dochub modules by settings placeholder
-            # of attributes
             for placeholder in {"text", "raw_text", "out"}:
                 try:
                     if not hasattr(message, placeholder):
@@ -702,8 +713,6 @@ class CommandDispatcher:
                 except UnicodeDecodeError:
                     pass
 
-            # Run watcher via ensure_future so in case user has a lot
-            # of watchers with long actions, they can run simultaneously
             ensure_future(
                 self.future_dispatcher(
                     func,
@@ -719,8 +728,6 @@ class CommandDispatcher:
         exception_handler: callable,
         *args,
     ):
-        # Will be used to determine, which client caused logging messages
-        # parsed via inspect.stack()
         _Pust_client_id_logging_tag = copy.copy(self.client.tg_id)  # noqa: F841
         try:
             await func(message)

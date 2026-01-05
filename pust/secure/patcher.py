@@ -1,4 +1,3 @@
-
 # SPDX-License-Identifier: GNU AGPL v3.0
 #
 # This file is a part of Pust Userbot.
@@ -10,7 +9,7 @@ import logging
 import re
 from pathlib import Path
 
-from Pusttl.sessions import SQLiteSession
+from telethon.sessions import SQLiteSession
 
 from ..tl_cache import CustomTelegramClient
 from .customtl import ConnectionTcpFull, MTProtoState

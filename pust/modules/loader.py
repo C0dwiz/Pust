@@ -8,7 +8,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -39,10 +39,10 @@ from importlib.machinery import ModuleSpec
 from urllib.parse import urlparse
 
 import requests
-from Pusttl.errors.common import ScamDetectionError
-from Pusttl.errors.rpcerrorlist import MediaCaptionTooLongError
-from Pusttl.tl.functions.channels import JoinChannelRequest
-from Pusttl.tl.types import Channel, Message
+from telethon.errors.common import ScamDetectionError
+from telethon.errors.rpcerrorlist import MediaCaptionTooLongError
+from telethon.tl.functions.channels import JoinChannelRequest
+from telethon.tl.types import Channel, Message
 
 from .. import loader, main, utils
 from .._local_storage import RemoteStorage
@@ -189,15 +189,13 @@ class LoaderMod(loader.Module):
             },
         )
 
-    @loader.command(alias = "dlm")
+    @loader.command(alias="dlm")
     async def dlmod(self, message: Message, force_pm: bool = False):
         if args := utils.get_args(message):
             if len(args) == 1:
                 args = args[0]
 
-                await utils.answer(
-                    message, self.strings("finding_module_in_repos")
-                )
+                await utils.answer(message, self.strings("finding_module_in_repos"))
                 if (
                     await self.download_and_install(args, message, force_pm)
                     == MODULE_LOADING_FORBIDDEN
@@ -215,14 +213,15 @@ class LoaderMod(loader.Module):
 
                 for arg in args:
                     result = await self.download_and_install(arg)
-                    
+
                     if result == MODULE_LOADING_FAILED:
                         not_installed.append(arg)
                 await utils.answer(
-                    message, "{} modules was installed.\n\nModules <code>{}</code> cannot be installed because they are not available in the repo".format(
+                    message,
+                    "{} modules was installed.\n\nModules <code>{}</code> cannot be installed because they are not available in the repo".format(
                         len(args) - len(not_installed),
-                        "</code>, <code>".join(not_installed)
-                    )
+                        "</code>, <code>".join(not_installed),
+                    ),
                 )
 
                 if self.fully_loaded:
@@ -298,7 +297,7 @@ class LoaderMod(loader.Module):
     ) -> dict:
         return {
             repo: {
-                f"Mod/{repo_id}/{i}": f'{repo.strip("/")}/{link}.py'
+                f"Mod/{repo_id}/{i}": f"{repo.strip('/')}/{link}.py"
                 for i, link in enumerate(set(await self._get_repo(repo)))
             }
             for repo_id, repo in enumerate(
@@ -411,9 +410,7 @@ class LoaderMod(loader.Module):
             await utils.answer(message, self.strings("provide_module"))
             return
 
-        await utils.answer(
-            message, self.strings("loading_module_via_file")
-        )
+        await utils.answer(message, self.strings("loading_module_via_file"))
 
         path_ = None
         doc = await msg.download_media(bytes)
@@ -515,7 +512,9 @@ class LoaderMod(loader.Module):
         )
 
     async def install_requirements(self, requirements: list):
-        is_venv = hasattr(sys, 'real_prefix') or sys.prefix != getattr(sys, 'base_prefix', sys.prefix)
+        is_venv = hasattr(sys, "real_prefix") or sys.prefix != getattr(
+            sys, "base_prefix", sys.prefix
+        )
         need_user_flag = loader.USER_INSTALL and not is_venv
 
         pip = await asyncio.create_subprocess_exec(
@@ -598,14 +597,14 @@ class LoaderMod(loader.Module):
             requirements = []
             try:
                 requirements = list(
-                                filter(
-                                    lambda x: not x.startswith(("-", "_", ".")),
-                                    map(
-                                        str.strip,
-                                        loader.VALID_PIP_PACKAGES.search(doc)[1].split(),
-                                    ),
-                                )
-                            )
+                    filter(
+                        lambda x: not x.startswith(("-", "_", ".")),
+                        map(
+                            str.strip,
+                            loader.VALID_PIP_PACKAGES.search(doc)[1].split(),
+                        ),
+                    )
+                )
             except TypeError:
                 pass
 
@@ -650,10 +649,10 @@ class LoaderMod(loader.Module):
 
         module_name = f"Pust.modules.{uid}"
         doc = geek.compat(doc)
-        
+
         async def restart_inline(call: InlineCall):
             await call.edit(self.strings["requirements_restarted"])
-            await self.invoke("restart", "-f", message = message)
+            await self.invoke("restart", "-f", message=message)
 
         async def core_overwrite(e: CoreOverwriteError):
             nonlocal message
@@ -697,7 +696,7 @@ class LoaderMod(loader.Module):
                     {
                         "sklearn": "scikit-learn",
                         "pil": "Pillow",
-                        "Pusttl": "Pust-TL-New",
+                        "telethon": "Pust-TL-New",
                     }.get(e.name.lower(), e.name)
                 ]
 
@@ -710,12 +709,10 @@ class LoaderMod(loader.Module):
                     if message is not None:
                         await self.inline.form(
                             message=message,
-                            text = self.strings("requirements_restart").format(e.name),
-                            reply_markup = [
-                                {
-                                    "text": "🚀 Restart", "callback": restart_inline
-                                }
-                            ]
+                            text=self.strings("requirements_restart").format(e.name),
+                            reply_markup=[
+                                {"text": "🚀 Restart", "callback": restart_inline}
+                            ],
                         )
 
                     return
@@ -725,8 +722,7 @@ class LoaderMod(loader.Module):
                         message,
                         self.strings("requirements_installing").format(
                             "\n".join(
-                                f"{self.config['command_emoji']}"
-                                f" {req}"
+                                f"{self.config['command_emoji']} {req}"
                                 for req in requirements
                             )
                         ),
@@ -735,10 +731,7 @@ class LoaderMod(loader.Module):
                 result = await self.install_requirements(requirements)
                 if not result:
                     if message is not None:
-                        await utils.answer(
-                            message,
-                            self.strings("requirements_failed")
-                        )
+                        await utils.answer(message, self.strings("requirements_failed"))
 
                     return
 
@@ -771,11 +764,11 @@ class LoaderMod(loader.Module):
                         await utils.answer(
                             message,
                             (
-                                self.strings('scam_module').format(
+                                self.strings("scam_module").format(
                                     name=instance.__class__.__name__,
                                     prefix=self.get_prefix(),
                                 )
-                            )
+                            ),
                         )
                 return
         except Exception as e:
@@ -852,11 +845,11 @@ class LoaderMod(loader.Module):
                         await utils.answer(
                             message,
                             (
-                                self.strings('scam_module').format(
+                                self.strings("scam_module").format(
                                     name=instance.__class__.__name__,
                                     prefix=self.get_prefix(),
                                 )
-                            )
+                            ),
                         )
                 return
             except loader.SelfUnload as e:
@@ -1131,21 +1124,19 @@ class LoaderMod(loader.Module):
                     if "💡" in status:
                         status = status.split("<code>")[0]
 
-                    errors.append(
-                        f"<code>{module}</code> — {status}"
-                    )
-                else: success.append(f"<code>{module}</code>")
+                    errors.append(f"<code>{module}</code> — {status}")
+                else:
+                    success.append(f"<code>{module}</code>")
 
             if success:
                 msg += self.strings["modules_unloaded"].format(
-                    unloaded_num = len(success),
-                    unloaded=", ".join(success)
+                    unloaded_num=len(success), unloaded=", ".join(success)
                 )
             if errors:
-                msg += ("\n" + self.strings["modules_not_unloaded"].format(
-                    not_unloaded = len(errors),
+                msg += "\n" + self.strings["modules_not_unloaded"].format(
+                    not_unloaded=len(errors),
                     errors="\n".join(errors),
-                ))
+                )
 
         await utils.answer(message, msg)
 
@@ -1181,7 +1172,6 @@ class LoaderMod(loader.Module):
             else self.strings("not_unloaded")
         )
         return msg
-
 
     @loader.command()
     async def clearmodules(self, message: Message):
@@ -1336,9 +1326,7 @@ class LoaderMod(loader.Module):
             await utils.answer(message, self.strings("args"))
             return
 
-        await utils.answer(
-            message, self.strings("ml_load_module")
-        )
+        await utils.answer(message, self.strings("ml_load_module"))
 
         exact = True
         if not (
@@ -1397,7 +1385,7 @@ class LoaderMod(loader.Module):
             else (
                 f'📼 <b><a href="{link}">Link</a> for'
                 f" {utils.escape_html(class_name)}:</b>"
-                f' <code>{link}</code>\n\n{self.strings("not_exact") if not exact else ""}'
+                f" <code>{link}</code>\n\n{self.strings('not_exact') if not exact else ''}"
             )
         )
 

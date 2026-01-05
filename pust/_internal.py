@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -26,6 +26,7 @@ import sys
 
 from typing import Callable
 
+
 def fw_protect():
     sleep(random.randint(1000, 2000) / 1000)
 
@@ -44,7 +45,7 @@ def die():
     """Platform-dependent way to kill the current process group"""
     if "DOCKER" in os.environ:
         sys.exit(0)
-    elif sys.platform == 'win32':
+    elif sys.platform == "win32":
         # Windows implementation
         sys.exit(0)
     else:
@@ -54,21 +55,19 @@ def die():
         os.killpg(os.getpgid(os.getpid()), signal.SIGTERM)
 
 
-
 def restart():
     if "--sandbox" in " ".join(sys.argv):
         exit(0)
 
     if "Pust_DO_NOT_RESTART2" in os.environ:
         print(
-            "PustTL version 1.0.2 or higher is required, use `pip install Pust-tl-new -U` for update."
+            "telethon version 1.0.2 or higher is required, use `pip install Pust-tl-new -U` for update."
         )
         sys.exit(0)
 
     logging.getLogger().setLevel(logging.CRITICAL)
 
     print("🔄 Restarting...")
-
 
     if "LAVHOST" in os.environ:
         os.system("lavhost restart")

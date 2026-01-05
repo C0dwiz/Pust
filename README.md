@@ -40,15 +40,15 @@
   
 </div>
 
-
 ---
 
 ## ⚠️ Security Notice
 
 > **Important Security Advisory**  
 > While Pust implements extended security measures, installing modules from untrusted developers may still cause damage to your server/account.
-> 
+>
 > **Recommendations:**
+>
 > - ✅ Download modules exclusively from official repositories or trusted developers
 > - ❌ Do NOT install modules if unsure about their safety
 > - ⚠️ Exercise caution with unknown commands (`.terminal`, `.eval`, `.ecpp`, etc.)
@@ -58,6 +58,7 @@
 ## 🚀 Installation
 
 ### VPS/VDS
+>
 > **Note for VPS/VDS Users:**  
 > Add `--proxy-pass` to enable SSH tunneling  
 > Add `--no-web` for console-only setup  
@@ -73,6 +74,7 @@
   pip install -r requirements.txt && \
   python3 -m Pust
   ```
+
 </details>
 
 <details>
@@ -87,6 +89,7 @@
   python3 -m pip install -r requirements.txt && \
   python3 -m Pust
   ```
+
 </details>
 
 <details>
@@ -101,17 +104,18 @@ source .venv/bin/activate && \
 python3 -m pip install -r requirements.txt && \
 python3 -m Pust
 ```
+
 </details>
 
-
-
 ### Other
+
 <details>
   <summary><b>WSL(Windows)</b></summary>
 
   > **⚠️ WARNING: Can be unstable!**
 
-  1. **Download WSL.** For this open window PowerShell with admin rights and write in console 
+  1. **Download WSL.** For this open window PowerShell with admin rights and write in console
+
   ```powershell
   wsl --install -d Ubuntu-22.04
   ```
@@ -119,17 +123,21 @@ python3 -m Pust
   > *⚠️For install beed Windows 10 build 2004 or Windows 11 of any version and PC with virtualization support.*
   > *For installation on earlier OS, please refer to this [page](https://learn.microsoft.com/ru-ru/windows/wsl/install-manual).*
   
-  2. **Restart PC and start programm Ubuntu 22.04.x**
-  3. **Enter this command(RMB):** 
+  1. **Restart PC and start programm Ubuntu 22.04.x**
+  2. **Enter this command(RMB):**
+
   ```bash
   curl -Ss https://bootstrap.pypa.io/get-pip.py | python3
   ```
+
   > *⚠️ If yellow warnings appear, enter export PATH="/home/username/.local/bin:$PATH" replacing /home/username/.local/bin with the path mentioned in the message*
   
-  4. **Enter this command(RMB):**
+  1. **Enter this command(RMB):**
+
   ```bash
   clear && git clone https://github.com/C0dwiz/Pust && cd Pust && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && python3 -m Pust
   ```
+
   > **🔗How to get API_ID and API_HASH?:** [Video](https://youtu.be/DcqDA249Lhg?t=24)
   
 </details>
@@ -139,18 +147,20 @@ python3 -m Pust
   
   1. <b>Install UserLAnd from</b> <a href="https://play.google.com/store/apps/details?id=tech.ula">the link</a>
   2. <b>Open it, choose Ubuntu —&gt; Minimal —&gt; Terminal</b>
-  3. <b>Wait for the distribution to install, you can pour some tea</b> 
+  3. <b>Wait for the distribution to install, you can pour some tea</b>
   4. <b>After successful installation, a terminal will open in front of you, write there:</b>
-    
+
   ```bash
   sudo apt update && sudo apt upgrade -y && sudo apt install python3 git python3-pip -y && git clone https://github.com/C0dwiz/Pust && cd Pust && python3 -m venv .venv && source .venv/bin/activate && sudo pip install -r requirements.txt && python3 -m Pust
   ```
 
-5. <b>At the end of the installation, a link will appear, follow it and enter your account details to log in.</b>
+1. <b>At the end of the installation, a link will appear, follow it and enter your account details to log in.</b>
+
 > **Voila! You have installed Pust on UserLAnd.**
 </details>
 
 ### Official hostings
+
 <details>
 <summary><b>🌘 HikkaHost</b></summary>
   
@@ -158,6 +168,7 @@ python3 -m Pust
   2. Press "Install"
   3. Choose "🪐 Pust"
   And continue installation.
+
   > **After that, you will receive a link, open it and login in your account.**
 
 </details>
@@ -176,14 +187,13 @@ To install, just go to [@lavhostbot](https://t.me/lavhostbot) and follow these s
 
 <details>
   <summary><b>🧃Jamhost</b></summary>
-    
+
   1. Go to [@jamhostbot](https://t.me/jamhostbot) and write the command <code>/pay</code>
   2. Pay for the subscription on the website
   3. After payment, write the command <code>/install</code> to the bot, select " <b>🪐 Pust</b> " in the list of userbots and select the desired server
   4. Log in using the link provided by the bot
+
 </details>
-
-
 
 ## Additional Features
 
@@ -239,12 +249,14 @@ To install, just go to [@lavhostbot](https://t.me/lavhostbot) and follow these s
 ## ⚠️ Usage Disclaimer
 
 > This project is provided as-is. The developer takes **NO responsibility** for:
+>
 > - Account bans or restrictions
 > - Message deletions by Telegram
 > - Security issues from scam modules
 > - Session leaks from malicious modules
 >
 > **Security Recommendations:**
+>
 > - Enable `.api_fw_protection`
 > - Avoid installing many modules at once
 > - Review [Telegram's Terms](https://core.telegram.org/api/terms)

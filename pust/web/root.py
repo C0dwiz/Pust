@@ -8,7 +8,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -31,7 +31,7 @@ import aiohttp_jinja2
 import requests
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiohttp import web
-from Pusttl.errors import (
+from telethon.errors import (
     FloodWaitError,
     PasswordHashInvalidError,
     PhoneCodeExpiredError,
@@ -39,12 +39,12 @@ from Pusttl.errors import (
     SessionPasswordNeededError,
     YouBlockedUserError,
 )
-from Pusttl.password import compute_check
-from Pusttl.sessions import MemorySession
-from Pusttl.tl.functions.account import GetPasswordRequest
-from Pusttl.tl.functions.auth import CheckPasswordRequest
-from Pusttl.tl.functions.contacts import UnblockRequest
-from Pusttl.utils import parse_phone
+from telethon.password import compute_check
+from telethon.sessions import MemorySession
+from telethon.tl.functions.account import GetPasswordRequest
+from telethon.tl.functions.auth import CheckPasswordRequest
+from telethon.tl.functions.contacts import UnblockRequest
+from telethon.utils import parse_phone
 
 from .. import database, main, utils
 from .._internal import restart
@@ -89,7 +89,7 @@ class Web:
         self.api_set = asyncio.Event()
         self.clients_set = asyncio.Event()
 
-    async def schedule_restart(self,One=None):
+    async def schedule_restart(self, One=None):
         # Yeah-yeah, ikr, but it's the only way to restart
         await asyncio.sleep(1)
         await main.Pust.save_client_session(self._pending_client, delay_restart=False)
@@ -101,10 +101,13 @@ class Web:
             "vds": "https://github.com/hikariatama/assets/raw/master/waning-crescent-moon_1f318.png",
             "lavhost": "https://github.com/hikariatama/assets/raw/master/victory-hand_270c-fe0f.png",
             "docker": "https://github.com/hikariatama/assets/raw/master/spouting-whale_1f433.png",
-        }[(
-            "lavhost"
-            if "LAVHOST" in os.environ
-            else "docker" if "DOCKER" in os.environ else "vds"
+        }[
+            (
+                "lavhost"
+                if "LAVHOST" in os.environ
+                else "docker"
+                if "DOCKER" in os.environ
+                else "vds"
             )
         ]
 
@@ -283,7 +286,6 @@ class Web:
             if self._2fa_needed:
                 return web.Response(status=403, body="2FA")
 
-
             asyncio.ensure_future(self.schedule_restart(self))
             # self.schedule_restart()
             return web.Response(status=200, body="SUCCESS")
@@ -400,7 +402,7 @@ class Web:
             )
 
         logger.debug("2FA code accepted, logging in")
-        
+
         asyncio.ensure_future(self.schedule_restart(self))
         # self.schedule_restart()
         return web.Response(status=200, body="SUCCESS")
@@ -461,7 +463,6 @@ class Web:
                     body=(self._render_fw_error(e)),
                 )
 
-        
         asyncio.ensure_future(self.schedule_restart(self))
         # self.schedule_restart()
         return web.Response(status=200, body="SUCCESS")
@@ -475,7 +476,6 @@ class Web:
 
         first_session = not bool(main.Pust.clients)
 
-        # Client is ready to pass in to dispatcher
         main.Pust.clients = list(set(main.Pust.clients + [self._pending_client]))
         self._pending_client = None
 

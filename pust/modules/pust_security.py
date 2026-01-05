@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -21,9 +21,9 @@ import datetime
 import time
 import typing
 
-from Pusttl.hints import EntityLike
-from Pusttl.tl.types import Message, PeerUser, User
-from Pusttl.utils import get_display_name
+from telethon.hints import EntityLike
+from telethon.tl.types import Message, PeerUser, User
+from telethon.utils import get_display_name
 
 from .. import loader, main, security, utils
 from ..inline.types import InlineCall, InlineMessage
@@ -657,7 +657,8 @@ class PustSecurityMod(loader.Module):
                     [
                         self.strings("li").format(
                             i.id, utils.escape_html(get_display_name(i))
-                        ) + (f" ({p})" if p else "")
+                        )
+                        + (f" ({p})" if p else "")
                         for i, p in zip(_resolved_users, _and_prefixes)
                     ]
                 )
@@ -680,11 +681,7 @@ class PustSecurityMod(loader.Module):
                     else []
                 )
             )
-            + (
-                [f"command/{command}"]
-                if command in self.allmodules.commands
-                else []
-            )
+            + ([f"command/{command}"] if command in self.allmodules.commands else [])
             + (
                 [f"inline/{needle.lower().removeprefix('@')}"]
                 if needle.lower().removeprefix("@") in self.allmodules.inline_handlers
@@ -1038,7 +1035,6 @@ class PustSecurityMod(loader.Module):
 
     @loader.command()
     async def tsecrm(self, message: Message):
-
         if not (args := utils.get_args(message)) or args[0] not in [
             "user",
             "chat",
@@ -1128,7 +1124,6 @@ class PustSecurityMod(loader.Module):
 
     @loader.command()
     async def tsecclr(self, message: Message):
-
         if (
             not (args := utils.get_args(message))
             or not (args := args[0])
@@ -1203,7 +1198,6 @@ class PustSecurityMod(loader.Module):
     @loader.command()
     async def tsec(self, message: Message):
         if not (args := utils.get_args(message)):
-
             await utils.answer(
                 message,
                 self.strings("rules").format(

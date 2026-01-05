@@ -1,53 +1,184 @@
-function auth(c) {
-    $(".main").fadeOut(250),
-        setTimeout(() => {
-            $(".auth")
-                .hide()
-                .fadeIn(250, () => {
-                    $("#tg_icon").html(""),
-                        bodymovin.loadAnimation({
-                            container: document.getElementById("tg_icon"),
-                            renderer: "canvas",
-                            loop: !0,
-                            autoplay: !0,
-                            path: "https://assets9.lottiefiles.com/packages/lf20_bgqoyj8l.json",
-                            rendererSettings: {
-                                clearCanvas: !0
-                            },
-                        });
-                }),
-                fetch("/web_auth", {
-                    method: "POST",
-                    credentials: "include",
-                    timeout: 25e4,
-                })
-                    .then((b) => b.text())
-                    .then((a) =>
-                        "TIMEOUT" == a ?
-                            (error_message(
-                                "Code waiting timeout exceeded. Reload page and try again.",
-                            ),
-                                void $(".auth").fadeOut(250)) :
-                            a.startsWith("Pust_") ?
-                                ($.cookie("session", a),
-                                    (auth_required = !1),
-                                    $(".authorized").hide().fadeIn(100),
-                                    $(".auth").fadeOut(250, () => {
-                                        $(".installation").fadeIn(250);
-                                    }),
-                                    void c()) :
-                                void 0,
-                    );
-        }, 250);
+// Modern JavaScript with performance optimizations
+'use strict';
+
+// Cache DOM elements for better performance
+const elements = {
+    main: document.querySelector('.main'),
+    auth: document.querySelector('.auth'),
+    authorized: document.querySelector('.authorized'),
+    installation: document.querySelector('.installation'),
+    tgIcon: document.getElementById('tg_icon'),
+    qrInner: document.querySelector('.qr_inner')
+};
+
+// State management
+const state = {
+    qrInterval: null,
+    qrLogin: false,
+    authRequired: true,
+    oldQrSizes: []
+};
+
+// Optimized authentication function
+async function auth(callback) {
+    // Hide main content with fade effect
+    await fadeOut(elements.main, 250);
+    
+    setTimeout(async () => {
+        // Show auth section
+        await fadeIn(elements.auth, 250);
+        
+        // Load Lottie animation
+        if (elements.tgIcon) {
+            elements.tgIcon.innerHTML = '';
+            loadLottieAnimation(elements.tgIcon);
+        }
+        
+        // Perform authentication
+        try {
+            const response = await fetch('/web_auth', {
+                method: 'POST',
+                credentials: 'include',
+                timeout: 250000
+            });
+            
+            const result = await response.text();
+            handleAuthResponse(result, callback);
+            
+        } catch (error) {
+            console.error('Auth error:', error);
+            showErrorMessage('Authentication failed. Please try again.');
+            await fadeOut(elements.auth, 250);
+        }
+    }, 250);
 }
-var qr_interval = null,
-    qr_login = !1,
-    old_qr_sizes = [
-        document.querySelector(".qr_inner").style.width,
-        document.querySelector(".qr_inner").style.height,
-    ];
-(document.querySelector(".qr_inner").style.width = "100px"),
-    (document.querySelector(".qr_inner").style.height = "100px");
+
+// Load Lottie animation with error handling
+function loadLottieAnimation(container) {
+    try {
+        bodymovin.loadAnimation({
+            container: container,
+            renderer: 'canvas',
+            loop: true,
+            autoplay: true,
+            path: 'https://assets9.lottiefiles.com/packages/lf20_bgqoyj8l.json',
+            rendererSettings: {
+                clearCanvas: true
+            }
+        });
+    } catch (error) {
+        console.error('Lottie animation error:', error);
+    }
+}
+
+// Handle authentication response
+function handleAuthResponse(response, callback) {
+    if (response === 'TIMEOUT') {
+        showErrorMessage('Code waiting timeout exceeded. Reload page and try again.');
+        fadeOut(elements.auth, 250);
+        return;
+    }
+    
+    if (response.startsWith('Pust_')) {
+        // Set session cookie
+        document.cookie = `session=${response}`;
+        state.authRequired = false;
+        
+        // Show authorized content
+        hide(elements.authorized);
+        fadeIn(elements.authorized, 100);
+        
+        // Transition to installation
+        fadeOut(elements.auth, 250, () => {
+            fadeIn(elements.installation, 250);
+        });
+        
+        // Execute callback if provided
+        if (typeof callback === 'function') {
+            callback();
+        }
+    }
+}
+
+// Utility functions for animations
+function fadeOut(element, duration = 250, callback) {
+    return new Promise(resolve => {
+        if (!element) {
+            resolve();
+            return;
+        }
+        
+        element.style.transition = `opacity ${duration}ms ease`;
+        element.style.opacity = '0';
+        
+        setTimeout(() => {
+            element.style.display = 'none';
+            if (typeof callback === 'function') {
+                callback();
+            }
+            resolve();
+        }, duration);
+    });
+}
+
+function fadeIn(element, duration = 250) {
+    return new Promise(resolve => {
+        if (!element) {
+            resolve();
+            return;
+        }
+        
+        element.style.display = '';
+        element.style.opacity = '0';
+        element.style.transition = `opacity ${duration}ms ease`;
+        
+        // Force reflow
+        element.offsetHeight;
+        
+        element.style.opacity = '1';
+        
+        setTimeout(() => {
+            resolve();
+        }, duration);
+    });
+}
+
+function hide(element) {
+    if (element) {
+        element.style.display = 'none';
+    }
+}
+
+function showErrorMessage(message) {
+    // Create or update error message element
+    let errorEl = document.getElementById('error-message');
+    if (!errorEl) {
+        errorEl = document.createElement('div');
+        errorEl.id = 'error-message';
+        errorEl.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff4444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            max-width: 300px;
+        `;
+        document.body.appendChild(errorEl);
+    }
+    
+    errorEl.textContent = message;
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        errorEl.style.opacity = '0';
+        setTimeout(() => {
+            errorEl.remove();
+        }, 300);
+    }, 5000);
+}
 
 function login_qr() {
     $("#continue_btn").fadeOut(100),

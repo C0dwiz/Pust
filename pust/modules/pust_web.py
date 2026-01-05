@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -22,7 +22,7 @@ import os
 import string
 import typing
 
-from Pusttl.errors import (
+from telethon.errors import (
     FloodWaitError,
     PasswordHashInvalidError,
     PhoneCodeExpiredError,
@@ -30,9 +30,9 @@ from Pusttl.errors import (
     PhoneNumberInvalidError,
     SessionPasswordNeededError,
 )
-from Pusttl.sessions import MemorySession
-from Pusttl.utils import parse_phone
-from Pusttl.tl.types import Message, User
+from telethon.sessions import MemorySession
+from telethon.utils import parse_phone
+from telethon.tl.types import Message, User
 
 from .. import loader, main, utils
 from .._internal import restart
@@ -50,21 +50,18 @@ class PustWebMod(loader.Module):
 
     strings = {"name": "PustWeb"}
 
-
     @loader.command()
     async def weburl(self, message: Message, force: bool = False):
-
         if "OTHERHOST" in os.environ or "JAMHOST" in os.environ:
             await utils.answer(message, self.strings["host_denied"])
         else:
-        
             if "LAVHOST" in os.environ:
                 form = await self.inline.form(
                     self.strings("lavhost_web"),
                     message=message,
                     reply_markup={
-                       "text": self.strings("web_btn"),
-                       "url": await main.Pust.web.get_url(proxy_pass=False),
+                        "text": self.strings("web_btn"),
+                        "url": await main.Pust.web.get_url(proxy_pass=False),
                     },
                     photo="https://imgur.com/a/yOoHsa2.png",
                 )
@@ -144,18 +141,20 @@ class PustWebMod(loader.Module):
 
     @loader.command()
     async def addacc(self, message: Message):
-
-        if "JAMHOST" in os.environ or "LAVHOST" in os.environ or "OTHERHOST" in os.environ:
+        if (
+            "JAMHOST" in os.environ
+            or "LAVHOST" in os.environ
+            or "OTHERHOST" in os.environ
+        ):
             await utils.answer(message, self.strings["host_denied"])
         else:
-
             id = utils.get_args(message)
             if not id:
                 reply = await message.get_reply_message()
                 id = reply.sender_id if reply else None
             else:
                 id = id[0]
-        
+
             user = None
             if id:
                 try:
@@ -169,39 +168,33 @@ class PustWebMod(loader.Module):
                     logger.error(f"Error while fetching user: {e}")
 
             if not user or not isinstance(user, User) or user.bot:
-                await utils.answer(
-                    message,
-                    self.strings("invalid_target")
-                )
+                await utils.answer(message, self.strings("invalid_target"))
                 return
-        
+
             if user.id == self._client.tg_id:
-                await utils.answer(
-                    message,
-                    self.strings("cant_add_self")
-                )
+                await utils.answer(message, self.strings("cant_add_self"))
                 return
-        
+
             if "force_insecure" in message.text.lower():
                 await self._inline_login(message, user)
-        
+
             try:
                 if not await self.inline.form(
-                        self.strings("add_user_confirm").format(
-                            utils.escape_html(user.first_name),
-                            user.id,
-                        ),
-                        message=message,
-                        reply_markup=[
-                            {
-                                "text": self.strings("btn_yes"),
-                                "callback": self._inline_login,
-                                "args": (user,),
-                            },
-                            {"text": self.strings("btn_no"), "action": "close"},
-                        ],
-                        photo="",
-                    ):
+                    self.strings("add_user_confirm").format(
+                        utils.escape_html(user.first_name),
+                        user.id,
+                    ),
+                    message=message,
+                    reply_markup=[
+                        {
+                            "text": self.strings("btn_yes"),
+                            "callback": self._inline_login,
+                            "args": (user,),
+                        },
+                        {"text": self.strings("btn_no"), "action": "close"},
+                    ],
+                    photo="",
+                ):
                     raise Exception
             except Exception:
                 await utils.answer(
@@ -211,13 +204,23 @@ class PustWebMod(loader.Module):
                         user.id,
                         utils.escape_html(self.get_prefix()),
                         user.id,
-                    )
+                    ),
                 )
             return
-        
-    async def _inline_login(self, call: typing.Union[Message, InlineCall], user: User, after_fail: bool = False):
+
+    async def _inline_login(
+        self,
+        call: typing.Union[Message, InlineCall],
+        user: User,
+        after_fail: bool = False,
+    ):
         reply_markup = [
-            {"text": self.strings("enter_number"), "input": self.strings("your_phone_number"), "handler": self.inline_phone_handler, "args": (user,)}
+            {
+                "text": self.strings("enter_number"),
+                "input": self.strings("your_phone_number"),
+                "handler": self.inline_phone_handler,
+                "args": (user,),
+            }
         ]
 
         fail = self.strings("incorrect_number") if after_fail else ""
@@ -226,9 +229,8 @@ class PustWebMod(loader.Module):
             call,
             fail + self.strings("enter_number_format"),
             reply_markup=reply_markup,
-            always_allow=[user.id]
+            always_allow=[user.id],
         )
-
 
     def _get_client(self) -> CustomTelegramClient:
         return CustomTelegramClient(
@@ -244,12 +246,9 @@ class PustWebMod(loader.Module):
             lang_code="en",
             system_lang_code="en-US",
         )
-    
+
     async def schedule_restart(self, call, client):
-        await utils.answer(
-            call,
-            self.strings("login_successful")
-        )
+        await utils.answer(call, self.strings("login_successful"))
         # Yeah-yeah, ikr, but it's the only way to restart
         await asyncio.sleep(1)
         await main.Pust.save_client_session(client, delay_restart=False)
@@ -259,7 +258,7 @@ class PustWebMod(loader.Module):
         if not (phone := parse_phone(data)):
             await self._inline_login(call, user, after_fail=True)
             return
-        
+
         client = self._get_client()
 
         await client.connect()
@@ -275,52 +274,83 @@ class PustWebMod(loader.Module):
         except PhoneNumberInvalidError:
             await self._inline_login(call, user, after_fail=True)
             return
-        
-        reply_markup = {"text": self.strings("enter_code"), "input": self.strings("login_code"), "handler": self.inline_code_handler, "args": (client, phone, user,)}
-        
+
+        reply_markup = {
+            "text": self.strings("enter_code"),
+            "input": self.strings("login_code"),
+            "handler": self.inline_code_handler,
+            "args": (
+                client,
+                phone,
+                user,
+            ),
+        }
+
         await utils.answer(
             call,
             self.strings("code_sent"),
             reply_markup=reply_markup,
-            always_allow=[user.id]
+            always_allow=[user.id],
         )
-        
+
     async def inline_code_handler(self, call, data, client, phone, user):
-        _code_markup = {"text": self.strings("enter_code"), "input": self.strings("login_code"), "handler": self.inline_code_handler, "args": (client, phone, user,)}
+        _code_markup = {
+            "text": self.strings("enter_code"),
+            "input": self.strings("login_code"),
+            "handler": self.inline_code_handler,
+            "args": (
+                client,
+                phone,
+                user,
+            ),
+        }
         if not data or len(data) != 5:
             await utils.answer(
                 call,
                 self.strings("invalid_code"),
                 reply_markup=_code_markup,
-                always_allow=[user.id]
+                always_allow=[user.id],
             )
             return
-        
+
         if any(c not in string.digits for c in data):
             await utils.answer(
                 call,
                 "Код должен состоять только из цифр. Повторите попытку.",
                 reply_markup=_code_markup,
-                always_allow=[user.id]
+                always_allow=[user.id],
             )
             return
-        
+
         try:
             await client.sign_in(phone, code=data)
         except SessionPasswordNeededError:
             reply_markup = [
-                {"text": self.strings("enter_2fa"), "input": self.strings("your_2fa"), "handler": self.inline_2fa_handler, "args": (client, phone, user,)},
+                {
+                    "text": self.strings("enter_2fa"),
+                    "input": self.strings("your_2fa"),
+                    "handler": self.inline_2fa_handler,
+                    "args": (
+                        client,
+                        phone,
+                        user,
+                    ),
+                },
             ]
             await utils.answer(
                 call,
                 self.strings("2fa_enabled"),
                 reply_markup=reply_markup,
-                always_allow=[user.id]
+                always_allow=[user.id],
             )
-            return 
+            return
         except PhoneCodeExpiredError:
             reply_markup = [
-                {"text": self.strings("request_code"), "callback": self.inline_phone_handler, "args": (phone, user)}
+                {
+                    "text": self.strings("request_code"),
+                    "callback": self.inline_phone_handler,
+                    "args": (phone, user),
+                }
             ]
             await utils.answer(
                 call,
@@ -328,15 +358,15 @@ class PustWebMod(loader.Module):
                 reply_markup=reply_markup,
                 always_allow=[user.id],
             )
-            return 
+            return
         except PhoneCodeInvalidError:
             await utils.answer(
                 call,
                 self.strings("invalid_code"),
                 reply_markup=_code_markup,
-                always_allow=[user.id]
+                always_allow=[user.id],
             )
-            return 
+            return
         except FloodWaitError as e:
             await utils.answer(
                 call,
@@ -344,21 +374,29 @@ class PustWebMod(loader.Module):
                 reply_markup={"text": self.strings("btn_no"), "action": "close"},
             )
             return
-        
+
         asyncio.ensure_future(self.schedule_restart(call, client))
 
-
     async def inline_2fa_handler(self, call, data, client, phone, user):
-        _2fa_markup = {"text": self.strings("enter_2fa"), "input": self.strings("your_2fa"), "handler": self.inline_2fa_handler, "args": (client, phone, user,)}
+        _2fa_markup = {
+            "text": self.strings("enter_2fa"),
+            "input": self.strings("your_2fa"),
+            "handler": self.inline_2fa_handler,
+            "args": (
+                client,
+                phone,
+                user,
+            ),
+        }
         if not data:
             await utils.answer(
                 call,
                 self.strings("invalid_password"),
                 reply_markup=_2fa_markup,
-                always_allow=[user.id]
+                always_allow=[user.id],
             )
             return
-        
+
         try:
             await client.sign_in(phone, password=data)
         except PasswordHashInvalidError:
@@ -366,9 +404,9 @@ class PustWebMod(loader.Module):
                 call,
                 self.strings("invalid_password"),
                 reply_markup=_2fa_markup,
-                always_allow=[user.id]
+                always_allow=[user.id],
             )
-            return 
+            return
         except FloodWaitError as e:
             await utils.answer(
                 call,
@@ -376,5 +414,5 @@ class PustWebMod(loader.Module):
                 reply_markup={"text": self.strings("btn_no"), "action": "close"},
             )
             return
-        
+
         asyncio.ensure_future(self.schedule_restart(call, client))

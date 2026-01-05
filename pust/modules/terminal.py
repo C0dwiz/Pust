@@ -22,7 +22,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -42,7 +42,7 @@ import re
 import typing
 import signal
 
-import Pusttl
+import telethon
 
 from .. import loader, utils
 
@@ -51,6 +51,7 @@ logger = logging.getLogger(__name__)
 
 def hash_msg(message):
     return f"{str(utils.get_chat_id(message))}/{str(message.id)}"
+
 
 async def read_stream(func: callable, stream, delay: float):
     last_task = None
@@ -83,7 +84,7 @@ async def sleep_for_task(func: callable, data: bytes, delay: float):
 class MessageEditor:
     def __init__(
         self,
-        message: Pusttl.tl.types.Message,
+        message: telethon.tl.types.Message,
         command: str,
         config,
         strings,
@@ -119,10 +120,10 @@ class MessageEditor:
         text += (self.strings("stderr") + stderr) if stderr else ""
         text += self.strings("end")
 
-        with contextlib.suppress(Pusttl.errors.rpcerrorlist.MessageNotModifiedError):
+        with contextlib.suppress(telethon.errors.rpcerrorlist.MessageNotModifiedError):
             try:
                 self.message = await utils.answer(self.message, text)
-            except Pusttl.errors.rpcerrorlist.MessageTooLongError as e:
+            except telethon.errors.rpcerrorlist.MessageTooLongError as e:
                 logger.error(e)
                 logger.error(text)
         # The message is never empty due to the template header
@@ -140,7 +141,10 @@ class SudoMessageEditor(MessageEditor):
     # Let's just hope these are safe to parse
     # Who wrote this?
     PASS_REQ = ["[sudo] password for", "[sudo] пароль для"]
-    WRONG_PASS = [r"\[sudo\] password for (.*): Sorry, try again\.", r"\[sudo\] пароль для (.*): Попробуйте еще раз.\."]
+    WRONG_PASS = [
+        r"\[sudo\] password for (.*): Sorry, try again\.",
+        r"\[sudo\] пароль для (.*): Попробуйте еще раз.\.",
+    ]
     TOO_MANY_TRIES = [r"\[sudo\] password for (.*): sudo: [0-9]+ incorrect password attempts", r"\[sudo\] пароль для (.*): sudo: [0-9]+ неверные попытки ввода пароля"]  # fmt: skip
 
     def __init__(self, message, command, config, strings, request_message):
@@ -181,7 +185,7 @@ class SudoMessageEditor(MessageEditor):
 
             try:
                 await utils.answer(self.message, text)
-            except Pusttl.errors.rpcerrorlist.MessageNotModifiedError as e:
+            except telethon.errors.rpcerrorlist.MessageNotModifiedError as e:
                 logger.debug(e)
 
             logger.debug("edited message with link to self")
@@ -197,14 +201,15 @@ class SudoMessageEditor(MessageEditor):
             self.message.client.remove_event_handler(self.on_message_edited)
             self.message.client.add_event_handler(
                 self.on_message_edited,
-                Pusttl.events.messageedited.MessageEdited(chats=["me"]),
+                telethon.events.messageedited.MessageEdited(chats=["me"]),
             )
 
             logger.debug("registered handler")
             handled = True
 
         if len(lines) > 1 and (
-            any(re.fullmatch(i, lastline) for i in self.TOO_MANY_TRIES) and self.state in {1, 3, 4}
+            any(re.fullmatch(i, lastline) for i in self.TOO_MANY_TRIES)
+            and self.state in {1, 3, 4}
         ):
             logger.debug("password wrong lots of times")
             await utils.answer(self.message, self.strings("auth_locked"))
@@ -245,7 +250,7 @@ class SudoMessageEditor(MessageEditor):
             # The user has provided interactive authentication. Send password to stdin for sudo.
             try:
                 self.authmsg = await utils.answer(message, self.strings("auth_ongoing"))
-            except Pusttl.errors.rpcerrorlist.MessageNotModifiedError:
+            except telethon.errors.rpcerrorlist.MessageNotModifiedError:
                 # Try to clear personal info if the edit fails
                 await message.delete()
 
@@ -296,13 +301,13 @@ class RawMessageEditor(SudoMessageEditor):
         logger.debug(text)
 
         with contextlib.suppress(
-            Pusttl.errors.rpcerrorlist.MessageNotModifiedError,
-            Pusttl.errors.rpcerrorlist.MessageEmptyError,
+            telethon.errors.rpcerrorlist.MessageNotModifiedError,
+            telethon.errors.rpcerrorlist.MessageEmptyError,
             ValueError,
         ):
             try:
                 await utils.answer(self.message, text)
-            except Pusttl.errors.rpcerrorlist.MessageTooLongError as e:
+            except telethon.errors.rpcerrorlist.MessageTooLongError as e:
                 logger.error(e)
                 logger.error(text)
 
@@ -329,19 +334,19 @@ class TerminalMod(loader.Module):
         user_command = utils.get_args_raw(message)
 
         dangerous_commands = [
-            r'rm\s+.*\s+\/\s*\*?',
-            r'rm\s+.*\s+\/etc\/',
-            r'rm\s+.*\s+\/dev\/',
-            r'rm\s+.*\s+\/boot\/',
-            r'rm\s+.*\s+\/root\/',
-            r'rm\s+.*\s+\/sys\/',
-            r'rm\s+.*\s+\/proc\/',
-            r'dd\s+.*if=.*of=/dev/',
-            r'mkfs\.',
-            r'dd\s+.*if=.*of=/dev/',
-            r'fdisk\s+/dev/',
-            r'\\x72\\x6d\\x20\\x2d\\x72\\x66\\x20\\x2f',
-            r'which\s+rm',
+            r"rm\s+.*\s+\/\s*\*?",
+            r"rm\s+.*\s+\/etc\/",
+            r"rm\s+.*\s+\/dev\/",
+            r"rm\s+.*\s+\/boot\/",
+            r"rm\s+.*\s+\/root\/",
+            r"rm\s+.*\s+\/sys\/",
+            r"rm\s+.*\s+\/proc\/",
+            r"dd\s+.*if=.*of=/dev/",
+            r"mkfs\.",
+            r"dd\s+.*if=.*of=/dev/",
+            r"fdisk\s+/dev/",
+            r"\\x72\\x6d\\x20\\x2d\\x72\\x66\\x20\\x2f",
+            r"which\s+rm",
         ]
         dangerous = False
         for pattern in dangerous_commands:
@@ -358,11 +363,10 @@ class TerminalMod(loader.Module):
             return
 
         await self.run_command(message, user_command)
-        
 
     async def run_command(
         self,
-        message: Pusttl.tl.types.Message,
+        message: telethon.tl.types.Message,
         cmd: str,
         editor: typing.Optional[MessageEditor] = None,
     ):
@@ -380,7 +384,9 @@ class TerminalMod(loader.Module):
                 cmd = " ".join([cmd.split(" ", 1)[0], "-S", cmd.split(" ", 1)[1]])
 
         sproc = await asyncio.create_subprocess_exec(
-            "/bin/bash", "-c", cmd,
+            "/bin/bash",
+            "-c",
+            cmd,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -421,9 +427,9 @@ class TerminalMod(loader.Module):
 
         if hash_msg(await message.get_reply_message()) in self.activecmds:
             try:
-                kill_pids = self.activecmds[hash_msg(await message.get_reply_message())] 
+                kill_pids = self.activecmds[hash_msg(await message.get_reply_message())]
                 if "-f" not in utils.get_args_raw(message):
-                     os.killpg(kill_pids.pid, signal.SIGTERM)
+                    os.killpg(kill_pids.pid, signal.SIGTERM)
                 else:
                     os.killpg(kill_pids.pid, signal.SIGKILL)
             except Exception:

@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -30,12 +30,11 @@ import typing
 
 import git
 from git import GitCommandError, Repo
-from Pusttl.extensions.html import CUSTOM_EMOJIS
-from Pusttl.tl.functions.messages import (
+from telethon.tl.functions.messages import (
     GetDialogFiltersRequest,
     UpdateDialogFilterRequest,
 )
-from Pusttl.tl.types import DialogFilter, TextWithEntities, Message
+from telethon.tl.types import DialogFilter, TextWithEntities, Message
 
 from .. import loader, main, utils, version
 from .._internal import restart
@@ -55,7 +54,7 @@ class UpdaterMod(loader.Module):
         self.config = loader.ModuleConfig(
             loader.ConfigValue(
                 "GIT_ORIGIN_URL",
-                "https://github.com/coddrago/Pust",
+                "https://github.com/coddrago/Heroku",
                 lambda: self.strings("origin_cfg_doc"),
                 validator=loader.validators.Link(),
             ),
@@ -76,13 +75,20 @@ class UpdaterMod(loader.Module):
         self.set("autoupdate", True)
         if not state:
             self.config["autoupdate"] = False
-            await self.inline.bot(call.answer(self.strings("autoupdate_off").format(prefix=self.get_prefix()), show_alert=True))
+            await self.inline.bot(
+                call.answer(
+                    self.strings("autoupdate_off").format(prefix=self.get_prefix()),
+                    show_alert=True,
+                )
+            )
             await call.delete()
             return
-        
+
         self.config["autoupdate"] = True
 
-        await self.inline.bot(call.answer(self.strings("autoupdate_on"), show_alert=True))
+        await self.inline.bot(
+            call.answer(self.strings("autoupdate_on"), show_alert=True)
+        )
         await call.delete()
 
     def get_changelog(self) -> str:
@@ -120,7 +126,9 @@ class UpdaterMod(loader.Module):
 
     @loader.loop(interval=60, autostart=True)
     async def poller(self):
-        if (self.config["disable_notifications"] and not self.config["autoupdate"]) or not self.get_changelog():
+        if (
+            self.config["disable_notifications"] and not self.config["autoupdate"]
+        ) or not self.get_changelog():
             return
 
         self._pending = self.get_latest()
@@ -133,16 +141,17 @@ class UpdaterMod(loader.Module):
             return
 
         if self._pending not in {utils.get_git_hash(), self._notified}:
-            if not self.config["autoupdate"]: manual_update = True
+            if not self.config["autoupdate"]:
+                manual_update = True
             else:
                 try:
                     async with aiohttp.ClientSession() as session:
                         r = await session.get(
                             url=f"https://api.github.com/repos/coddrago/Pust/contents/Pust/version.py?ref={version.branch}",
-                            headers={"Accept": "application/vnd.github.v3.raw"}
+                            headers={"Accept": "application/vnd.github.v3.raw"},
                         )
                         text = await r.text()
-                    
+
                     new_version = ""
                     for line in text.splitlines():
                         if line.strip().startswith("__version__"):
@@ -153,7 +162,8 @@ class UpdaterMod(loader.Module):
                     else:
                         logger.info("Got a major update, updating manually")
                         manual_update = True
-                except:
+                except (ValueError, IndexError, AttributeError) as e:
+                    logger.debug("Failed to parse version: %s", e)
                     manual_update = True
 
             if manual_update:
@@ -162,7 +172,7 @@ class UpdaterMod(loader.Module):
                     "https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/Pust/updated.png",
                     caption=self.strings("update_required").format(
                         utils.get_git_hash()[:6],
-                        '<a href="https://github.com/coddrago/Pust/compare/{}...{}">{}</a>'.format(
+                        '<a href="https://github.com/coddrago/Heroku/compare/{}...{}">{}</a>'.format(
                             utils.get_git_hash()[:12],
                             self.get_latest()[:12],
                             self.get_latest()[:6],
@@ -186,7 +196,7 @@ class UpdaterMod(loader.Module):
                     caption=self.strings("autoupdate_notifier").format(
                         self.get_latest()[:6],
                         self.get_changelog(),
-                        '<a href="https://github.com/coddrago/Pust/compare/{}...{}">{}</a>'.format(
+                        '<a href="https://github.com/coddrago/Heroku/compare/{}...{}">{}</a>'.format(
                             utils.get_git_hash()[:12],
                             self.get_latest()[:12],
                             "🔎 diff",
@@ -224,12 +234,15 @@ class UpdaterMod(loader.Module):
     @loader.command()
     async def changelog(self, message: Message):
         """Shows the changelog of the last major update"""
-        with open('CHANGELOG.md', mode='r', encoding='utf-8') as f:
-            changelog = f.read().split('##')[1].strip()
+        with open("CHANGELOG.md", mode="r", encoding="utf-8") as f:
+            changelog = f.read().split("##")[1].strip()
         if (await self._client.get_me()).premium:
-            changelog.replace('🌑 Pust', '<emoji document_id=5192765204898783881>🌘</emoji><emoji document_id=5195311729663286630>🌘</emoji><emoji document_id=5195045669324201904>🌘</emoji>')
+            changelog.replace(
+                "🌑 Pust",
+                "<emoji document_id=5192765204898783881>🌘</emoji><emoji document_id=5195311729663286630>🌘</emoji><emoji document_id=5195045669324201904>🌘</emoji>",
+            )
 
-        await utils.answer(message, self.strings('changelog').format(changelog))
+        await utils.answer(message, self.strings("changelog").format(changelog))
 
     @loader.command()
     async def restart(self, message: Message):
@@ -295,7 +308,7 @@ class UpdaterMod(loader.Module):
             self.strings("restarting_caption").format(
                 utils.get_platform_emoji()
                 if self._client.Pust_me.premium
-                and CUSTOM_EMOJIS
+                and main.CUSTOM_EMOJIS
                 and isinstance(msg_obj, Message)
                 else "Pust"
             ),
@@ -410,8 +423,10 @@ class UpdaterMod(loader.Module):
         if self.config["autoupdate"]:
             await utils.answer(message, self.strings["autoupdate_on"])
         else:
-            await utils.answer(message, self.strings["autoupdate_off"].format(prefix=self.get_prefix()))
-            
+            await utils.answer(
+                message, self.strings["autoupdate_off"].format(prefix=self.get_prefix())
+            )
+
     async def inline_update(
         self,
         msg_obj: typing.Union[InlineCall, Message],
@@ -431,7 +446,7 @@ class UpdaterMod(loader.Module):
                         " document_id=5195050806105087456>✌️</emoji><emoji"
                         " document_id=5195457642587233944>✌️</emoji><b>"
                         if self._client.Pust_me.premium
-                        and CUSTOM_EMOJIS
+                        and main.CUSTOM_EMOJIS
                         and isinstance(msg_obj, Message)
                         else "lavHost"
                     ),
@@ -515,7 +530,7 @@ class UpdaterMod(loader.Module):
                                 "callback": self._set_autoupdate_state,
                                 "args": (False,),
                             }
-                        ]
+                        ],
                     ]
                 ),
             )
@@ -543,10 +558,7 @@ class UpdaterMod(loader.Module):
                     folder_id,
                     DialogFilter(
                         folder_id,
-                        title=TextWithEntities(
-                            text='Pust',
-                            entities=[]
-                        ),
+                        title=TextWithEntities(text="Pust", entities=[]),
                         pinned_peers=(
                             [
                                 await self._client.get_input_entity(
@@ -608,7 +620,7 @@ class UpdaterMod(loader.Module):
                 "- User reached the limit of folders in Telegram\n"
                 "- User got floodwait\n"
                 "Ignoring error and adding folder addition to ignore list\n",
-                exc_info=True
+                exc_info=True,
             )
 
     async def update_complete(self):
@@ -669,14 +681,14 @@ class UpdaterMod(loader.Module):
     @loader.command()
     async def rollback(self, message: Message):
         if not (args := utils.get_args_raw(message)).isdigit():
-            await utils.answer(message, self.strings('invalid_args'))
+            await utils.answer(message, self.strings("invalid_args"))
             return
         if int(args) > 10:
-            await utils.answer(message, self.strings('rollback_too_far'))
+            await utils.answer(message, self.strings("rollback_too_far"))
             return
         form = await self.inline.form(
             message=message,
-            text=self.strings('rollback_confirm').format(num=args),
+            text=self.strings("rollback_confirm").format(num=args),
             reply_markup=[
                 [
                     {
@@ -690,13 +702,15 @@ class UpdaterMod(loader.Module):
                         "text": "❌",
                         "action": "close",
                     }
-                ]
-            ]
+                ],
+            ],
         )
 
     async def rollback_confirm(self, call: InlineCall, number: int):
-        await utils.answer(call, self.strings('rollback_process').format(num=number))
-        await asyncio.create_subprocess_shell(f'git reset --hard HEAD~{number}', stdout=asyncio.subprocess.PIPE)
+        await utils.answer(call, self.strings("rollback_process").format(num=number))
+        await asyncio.create_subprocess_shell(
+            f"git reset --hard HEAD~{number}", stdout=asyncio.subprocess.PIPE
+        )
         await self.restart_common(call)
 
     @loader.command()
@@ -704,8 +718,14 @@ class UpdaterMod(loader.Module):
         """| stops your userbot"""
 
         if "LAVHOST" in os.environ:
-            await utils.answer(message, self.strings["ub_stop"].format(emoji=utils.get_platform_emoji()))
+            await utils.answer(
+                message,
+                self.strings["ub_stop"].format(emoji=utils.get_platform_emoji()),
+            )
             await self.client.send_message("lavhostbot", "⏹ Stop")
         else:
-            await utils.answer(message, self.strings["ub_stop"].format(emoji=utils.get_platform_emoji()))
+            await utils.answer(
+                message,
+                self.strings["ub_stop"].format(emoji=utils.get_platform_emoji()),
+            )
             exit()

@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -33,9 +33,8 @@ from aiogram.types import (
     InputTextMessageContent,
 )
 from aiogram.exceptions import TelegramRetryAfter
-from Pusttl.errors.rpcerrorlist import ChatSendInlineForbiddenError
-from Pusttl.extensions.html import CUSTOM_EMOJIS
-from Pusttl.tl.types import Message
+from telethon.errors.rpcerrorlist import ChatSendInlineForbiddenError
+from telethon.tl.types import Message
 
 from .. import main, utils
 from ..types import PustReplyMarkup
@@ -199,7 +198,7 @@ class List(InlineUnit):
                 )(
                     (
                         utils.get_platform_emoji()
-                        if self._client.Pust_me.premium and CUSTOM_EMOJIS
+                        if self._client.Pust_me.premium and main.CUSTOM_EMOJIS
                         else "🪐"
                     )
                     + self.translator.getkey("inline.opening_list"),

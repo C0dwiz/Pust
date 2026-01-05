@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -25,10 +25,11 @@ import logging
 import os
 import re
 import time
+from enum import StrEnum, IntEnum
 from pathlib import Path
-from typing import Any, Optional, TypeVar, cast
+from typing import Any, Optional, TypeVar, cast, Protocol
 
-from Pust.pointers import (
+from .pointers import (
     NamedTupleMiddlewareList,
     NamedTupleMiddlewareDict,
     PointerList,
@@ -36,8 +37,8 @@ from Pust.pointers import (
     BaseSerializingMiddlewareDict,
     BaseSerializingMiddlewareList,
 )
-from Pusttl.errors.rpcerrorlist import ChannelsTooMuchError
-from Pusttl.tl.types import Message
+from telethon.errors.rpcerrorlist import ChannelsTooMuchError
+from telethon.tl.types import Message
 
 from . import main, utils
 from .tl_cache import CustomTelegramClient
@@ -57,18 +58,47 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=JSONSerializable)
 
 
+class DatabaseStatus(StrEnum):
+    """Database status enumeration"""
+
+    INITIALIZING = "initializing"
+    READY = "ready"
+    SAVING = "saving"
+    ERROR = "error"
+    CLOSED = "closed"
+
+
+class StorageType(IntEnum):
+    """Storage type enumeration"""
+
+    FILE = 0
+    REDIS = 1
+    MEMORY = 2
+
+
+class CacheProtocol(Protocol):
+    """Protocol for cache implementations"""
+
+    def get(self, key: str) -> Any | None: ...
+    def set(self, key: str, value: Any) -> None: ...
+    def delete(self, key: str) -> None: ...
+
+
 class NoAssetsChannel(Exception):
     """Raised when trying to read/store asset with no asset channel present"""
 
 
 class Database(dict):
     """Database manager for Pust Userbot"""
-    
+
     _MAX_REVISIONS = 15
     _REVISION_INTERVAL = 3
 
-    def __init__(self, client: CustomTelegramClient):
+    def __init__(self, client: CustomTelegramClient) -> None:
         super().__init__()
+        self._status: DatabaseStatus = DatabaseStatus.INITIALIZING
+        self._storage_type: StorageType = StorageType.FILE
+
         self._db_file: Optional[Path] = None
         self._client: CustomTelegramClient = client
         self._next_revision_call: float = 0.0
@@ -78,13 +108,25 @@ class Database(dict):
         self._saving_task: Optional[asyncio.Future] = None
         self._data: dict[str, dict[str, JSONSerializable]] = {}
 
-        try:
-            import redis
-            self._redis_client = redis
-        except ImportError:
-            self._redis_client = None
-            if "RAILWAY" in os.environ:
-                raise
+        match os.environ.get("RAILWAY"):
+            case "1" | "true" | "True":
+                try:
+                    import redis
+
+                    self._redis_client = redis
+                    self._storage_type = StorageType.REDIS
+                except ImportError as e:
+                    logger.error("Redis required for RAILWAY environment: %s", e)
+                    raise
+            case _:
+                try:
+                    import redis
+
+                    self._redis_client = redis
+                except ImportError:
+                    self._redis_client = None
+
+        self._status = DatabaseStatus.READY
 
     def __repr__(self) -> str:
         return object.__repr__(self)
@@ -120,7 +162,7 @@ class Database(dict):
             return False
 
         await asyncio.sleep(5)
-        
+
         try:
             utils.run_sync(self._redis_save_sync)
             logger.debug("Published database to Redis")
@@ -162,7 +204,7 @@ class Database(dict):
                 avatar=(
                     "https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/"
                     "Pust/Pust_assets.png"
-                )
+                ),
             )
         except ChannelsTooMuchError:
             self._assets = None
@@ -200,9 +242,7 @@ class Database(dict):
             if re.search(r'"(hikka\.)(\S+\":)', db_content):
                 logger.warning("Converting database after update")
                 db_content = re.sub(
-                    r'(hikka\.)(\S+\":)',
-                    lambda m: 'Pust.' + m.group(2),
-                    db_content
+                    r"(hikka\.)(\S+\":)", lambda m: "Pust." + m.group(2), db_content
                 )
             self.update(**json.loads(db_content))
             logger.debug("Database loaded from file")
@@ -262,7 +302,7 @@ class Database(dict):
 
             self.clear()
             self.update(**rev)
-            
+
             logger.error("Database restored from previous revision due to corruption")
             raise RuntimeError(
                 "Rewriting database to the last revision because new one destructed it"
@@ -294,14 +334,12 @@ class Database(dict):
     async def store_asset(self, message: Message) -> int:
         """
         Save asset to Telegram channel
-        
+
         Returns:
             Asset ID as integer
         """
         if not self._assets:
-            raise NoAssetsChannel(
-                "Tried to save asset to non-existing asset channel"
-            )
+            raise NoAssetsChannel("Tried to save asset to non-existing asset channel")
 
         try:
             if isinstance(message, Message):
@@ -368,7 +406,7 @@ class Database(dict):
     ) -> Any:
         """Get a pointer to database key"""
         value = self.get(owner, key, default)
-        
+
         current_value = self.get(owner, key, None)
         if current_value is not None and default is not None:
             if type(current_value) is not type(default):
@@ -409,6 +447,4 @@ class Database(dict):
         if isinstance(value, collections.abc.Hashable):
             return value
 
-        raise ValueError(
-            f"Pointer for type {type(value).__name__} is not implemented"
-        )
+        raise ValueError(f"Pointer for type {type(value).__name__} is not implemented")

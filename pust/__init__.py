@@ -8,7 +8,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -22,6 +22,7 @@
 
 __author__ = "Dan Gazizullin"
 __ForkAuthor__ = "Codrago"
+__ForkAuthor__ = "codwiz"
 __contact__ = "me@hikariatama.ru"
 __copyright__ = "Copyright 2022, Dan Gazizullin"
 __credits__ = ["LonamiWebs", "penn5"]

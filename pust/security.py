@@ -24,7 +24,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pustrbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -36,12 +36,12 @@
 
 import logging
 import time
-import typing
+from typing import NamedTuple, Callable
 
-from Pustints import EntityLike
-from Pustl.functions.messages import GetFullChatRequest
-from Pustl.types import ChatParticipantAdmin, ChatParticipantCreator, Message
-from Pusttils import get_display_name
+from telethon.hints import EntityLike
+from telethon.tl.functions.messages import GetFullChatRequest
+from telethon.tl.types import ChatParticipantAdmin, ChatParticipantCreator, Message
+from telethon.utils import get_display_name
 
 from . import main, utils
 from .database import Database
@@ -96,21 +96,21 @@ PUBLIC_PERMISSIONS = GROUP_OWNER | GROUP_ADMIN_ANY | GROUP_MEMBER | PM
 ALL = (1 << 13) - 1
 
 
-class SecurityGroup(typing.NamedTuple):
-    """Represents a security group"""
+class SecurityGroup(NamedTuple):
+    """Represents a security group with users and permissions."""
 
     name: str
-    users: typing.List[int]
-    permissions: typing.List[dict]
+    users: list[int]
+    permissions: list[dict]
 
 
 def owner(func: Command) -> Command:
     return _sec(func, OWNER)
 
 
-def _deprecated(name: str) -> callable:
+def _deprecated(name: str) -> Callable:
     def decorator(func: Command) -> Command:
-        logger.debug("Using deprecated decorator `%s`, which will have no effect", name)
+        logger.debug("Using deprecated decorator %r, which will have no effect", name)
         return func
 
     return decorator
@@ -180,9 +180,9 @@ class SecurityManager:
     def __init__(self, client: CustomTelegramClient, db: Database):
         self._client = client
         self._db = db
-        self._cache: typing.Dict[int, dict] = {}
+        self._cache: dict[int, dict] = {}
         self._last_warning: int = 0
-        self._sgroups: typing.Dict[str, SecurityGroup] = {}
+        self._sgroups: dict[str, SecurityGroup] = {}
 
         self._any_admin = self.any_admin = db.get(__name__, "any_admin", False)
         self._default = self.default = db.get(__name__, "default", DEFAULT_PERMISSIONS)
@@ -192,11 +192,11 @@ class SecurityManager:
 
         self._reload_rights()
 
-    def apply_sgroups(self, sgroups: typing.Dict[str, SecurityGroup]):
+    def apply_sgroups(self, sgroups: dict[str, SecurityGroup]) -> None:
         """Apply security groups"""
         self._sgroups = sgroups
 
-    def _reload_rights(self):
+    def _reload_rights(self) -> None:
         """
         Internal method to ensure that account owner is always in the owner list,
         to clear out outdated tsec rules and to remove prefixes of users, that is
@@ -213,13 +213,13 @@ class SecurityManager:
         for info in self._tsec_chat.copy():
             if info["expires"] and info["expires"] < time.time():
                 self._tsec_chat.remove(info)
-        
+
         sgroup_users = []
         for g in self._sgroups.values():
             for u in g.users:
                 sgroup_users.append(u)
 
-        tsec_users = [rule['target'] for rule in self._tsec_user]
+        tsec_users = [rule["target"] for rule in self._tsec_user]
         ub_owners = self.owner.copy()
 
         all_users = sgroup_users + tsec_users + ub_owners
@@ -231,7 +231,6 @@ class SecurityManager:
                 del prefixes[id]
 
         self._db.set(main.__name__, "command_prefixes", prefixes)
-
 
     def add_rule(
         self,
@@ -250,8 +249,11 @@ class SecurityManager:
         :return: None
         """
 
-        if target_type not in {"chat", "user"}:
-            raise ValueError(f"Invalid target_type: {target_type}")
+        match target_type:
+            case "chat" | "user":
+                pass  # Valid target types
+            case _:
+                raise ValueError(f"Invalid target_type: {target_type}")
 
         if all(
             not rule.startswith(rule_type)
@@ -284,16 +286,19 @@ class SecurityManager:
 
         any_ = False
 
-        if target_type == "user":
-            for rule in self.tsec_user.copy():
-                if rule["target"] == target_id:
-                    self.tsec_user.remove(rule)
-                    any_ = True
-        elif target_type == "chat":
-            for rule in self.tsec_chat.copy():
-                if rule["target"] == target_id:
-                    self.tsec_chat.remove(rule)
-                    any_ = True
+        match target_type:
+            case "user":
+                for rule in self.tsec_user.copy():
+                    if rule["target"] == target_id:
+                        self.tsec_user.remove(rule)
+                        any_ = True
+            case "chat":
+                for rule in self.tsec_chat.copy():
+                    if rule["target"] == target_id:
+                        self.tsec_chat.remove(rule)
+                        any_ = True
+            case _:
+                raise ValueError(f"Invalid target_type: {target_type}")
 
         return any_
 
@@ -309,20 +314,23 @@ class SecurityManager:
 
         any_ = False
 
-        if target_type == "user":
-            for rule in self.tsec_user.copy():
-                if rule["target"] == target_id and rule["rule"] == rule_cont:
-                    self.tsec_user.remove(rule)
-                    any_ = True
-        elif target_type == "chat":
-            for rule in self.tsec_chat.copy():
-                if rule["target"] == target_id and rule["rule"] == rule_cont:
-                    self.tsec_chat.remove(rule)
-                    any_ = True
+        match target_type:
+            case "user":
+                for rule in self.tsec_user.copy():
+                    if rule["target"] == target_id and rule["rule"] == rule_cont:
+                        self.tsec_user.remove(rule)
+                        any_ = True
+            case "chat":
+                for rule in self.tsec_chat.copy():
+                    if rule["target"] == target_id and rule["rule"] == rule_cont:
+                        self.tsec_chat.remove(rule)
+                        any_ = True
+            case _:
+                raise ValueError(f"Invalid target_type: {target_type}")
 
         return any_
 
-    def get_flags(self, func: typing.Union[Command, int]) -> int:
+    def get_flags(self, func: Command | int) -> int:
         """
         Gets the security flags for the given function
 
@@ -393,12 +401,12 @@ class SecurityManager:
 
     async def check(
         self,
-        message: typing.Optional[Message],
-        func: typing.Union[Command, int],
-        user_id: typing.Optional[int] = None,
-        inline_cmd: typing.Optional[str] = None,
+        message: Message | None,
+        func: Command | int,
+        user_id: int | None = None,
+        inline_cmd: str | None = None,
         *,
-        usernames: typing.Optional[typing.List[str]] = None,
+        usernames: list[str] | None = None,
     ) -> bool:
         """
         Checks if message sender is permitted to execute certain function
@@ -487,7 +495,7 @@ class SecurityManager:
         if user_id in self._db.get(main.__name__, "blacklist_users", []):
             return False
 
-        if message is None:  # In case of checking inline query security map
+        if message is None:
             return self._check_tsec_inline(user_id, inline_cmd) or bool(
                 config & EVERYONE
             )
@@ -563,8 +571,8 @@ class SecurityManager:
         if f_group_member and message.is_group or f_pm and message.is_private:
             return True
 
-        if message.is_channel:
-            if not message.is_group:
+        match (message.is_channel, message.is_group):
+            case (True, False):  # Channel but not group
                 chat_id = utils.get_chat_id(message)
                 if (
                     chat_id in self._cache
@@ -585,82 +593,91 @@ class SecurityManager:
 
                 if self._any_admin and f_group_admin_any or f_group_admin:
                     return True
-            elif f_group_admin_any or f_group_owner:
-                chat_id = utils.get_chat_id(message)
-                cache_obj = f"{chat_id}/{user_id}"
-                if (
-                    cache_obj in self._cache
-                    and self._cache[cache_obj]["exp"] >= time.time()
-                ):
-                    participant = self._cache[cache_obj]["user"]
-                else:
-                    participant = await message.client.get_permissions(
-                        message.peer_id,
-                        user_id,
-                    )
-                    self._cache[cache_obj] = {
-                        "user": participant,
-                        "exp": time.time() + 5 * 60,
-                    }
 
-                if (
-                    participant.is_creator
-                    or participant.is_admin
-                    and (
-                        self._any_admin
+                return False
+
+            case (True, True):  # Channel group
+                if f_group_admin_any or f_group_owner:
+                    chat_id = utils.get_chat_id(message)
+                    cache_obj = f"{chat_id}/{user_id}"
+                    if (
+                        cache_obj in self._cache
+                        and self._cache[cache_obj]["exp"] >= time.time()
+                    ):
+                        participant = self._cache[cache_obj]["user"]
+                    else:
+                        participant = await message.client.get_permissions(
+                            message.peer_id,
+                            user_id,
+                        )
+                        self._cache[cache_obj] = {
+                            "user": participant,
+                            "exp": time.time() + 5 * 60,
+                        }
+
+                    if (
+                        participant.is_creator
+                        or participant.is_admin
+                        and (
+                            self._any_admin
+                            and f_group_admin_any
+                            or f_group_admin
+                            or f_group_admin_add_admins
+                            and participant.add_admins
+                            or f_group_admin_change_info
+                            and participant.change_info
+                            or f_group_admin_ban_users
+                            and participant.ban_users
+                            or f_group_admin_delete_messages
+                            and participant.delete_messages
+                            or f_group_admin_pin_messages
+                            and participant.pin_messages
+                            or f_group_admin_invite_users
+                            and participant.invite_users
+                        )
+                    ):
+                        return True
+                return False
+
+            case (False, True):  # Regular group
+                if f_group_admin_any or f_group_owner:
+                    chat_id = utils.get_chat_id(message)
+                    cache_obj = f"{chat_id}/{user_id}"
+
+                    if (
+                        cache_obj in self._cache
+                        and self._cache[cache_obj]["exp"] >= time.time()
+                    ):
+                        participant = self._cache[cache_obj]["user"]
+                    else:
+                        full_chat = await message.client(
+                            GetFullChatRequest(message.chat_id)
+                        )
+                        participants = full_chat.full_chat.participants.participants
+                        participant = next(
+                            (
+                                possible_participant
+                                for possible_participant in participants
+                                if possible_participant.user_id == message.sender_id
+                            ),
+                            None,
+                        )
+                        self._cache[cache_obj] = {
+                            "user": participant,
+                            "exp": time.time() + 5 * 60,
+                        }
+
+                    if not participant:
+                        return False
+
+                    if (
+                        isinstance(participant, ChatParticipantCreator)
+                        or isinstance(participant, ChatParticipantAdmin)
                         and f_group_admin_any
-                        or f_group_admin
-                        or f_group_admin_add_admins
-                        and participant.add_admins
-                        or f_group_admin_change_info
-                        and participant.change_info
-                        or f_group_admin_ban_users
-                        and participant.ban_users
-                        or f_group_admin_delete_messages
-                        and participant.delete_messages
-                        or f_group_admin_pin_messages
-                        and participant.pin_messages
-                        or f_group_admin_invite_users
-                        and participant.invite_users
-                    )
-                ):
-                    return True
-            return False
-
-        if message.is_group and (f_group_admin_any or f_group_owner):
-            chat_id = utils.get_chat_id(message)
-            cache_obj = f"{chat_id}/{user_id}"
-
-            if (
-                cache_obj in self._cache
-                and self._cache[cache_obj]["exp"] >= time.time()
-            ):
-                participant = self._cache[cache_obj]["user"]
-            else:
-                full_chat = await message.client(GetFullChatRequest(message.chat_id))
-                participants = full_chat.full_chat.participants.participants
-                participant = next(
-                    (
-                        possible_participant
-                        for possible_participant in participants
-                        if possible_participant.user_id == message.sender_id
-                    ),
-                    None,
-                )
-                self._cache[cache_obj] = {
-                    "user": participant,
-                    "exp": time.time() + 5 * 60,
-                }
-
-            if not participant:
-                return
-
-            if (
-                isinstance(participant, ChatParticipantCreator)
-                or isinstance(participant, ChatParticipantAdmin)
-                and f_group_admin_any
-            ):
-                return True
+                    ):
+                        return True
+            case _:  # Private message or other
+                pass
 
         return False
 

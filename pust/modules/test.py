@@ -6,7 +6,7 @@
 
 # ©️ Codrago, 2024-2025
 # This file is a part of Pust Userbot
-# 🌐 https://github.com/coddrago/Pust
+# 🌐 https://github.com/coddrago/Heroku
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -26,8 +26,8 @@ import time
 import typing
 from io import BytesIO
 
-from Pusttl.tl.types import Message
-from Pusttl.types import InputMediaWebPage
+from telethon.tl.types import Message
+from telethon.types import InputMediaWebPage
 
 from .. import loader, main, utils
 from ..inline.types import InlineCall
@@ -273,7 +273,7 @@ class TestMod(loader.Module):
                             [
                                 {
                                     "text": name,
-                                "callback": self.logs,
+                                    "callback": self.logs,
                                     "args": (False, level),
                                 }
                                 for name, level in [
@@ -288,8 +288,8 @@ class TestMod(loader.Module):
                             2,
                         )
                         + [[{"text": self.strings("cancel"), "action": "close"}]],
-                )
-                else: 
+                    )
+                else:
                     raise
             except Exception as e:
                 await utils.answer(message, self.strings("set_loglevel") + f"\n{e}")
@@ -351,7 +351,11 @@ class TestMod(loader.Module):
 
         if len(logs) <= 2:
             back_button = {"text": self.strings["back"], "callback": self.logs}
-            await utils.answer(message, self.strings("no_logs").format(named_lvl), reply_markup=back_button)
+            await utils.answer(
+                message,
+                self.strings("no_logs").format(named_lvl),
+                reply_markup=back_button,
+            )
             return
 
         logs = self.lookup("evaluator").censor(logs)
@@ -365,7 +369,7 @@ class TestMod(loader.Module):
             *main.__version__,
             (
                 " <a"
-                f' href="https://github.com/coddrago/Pust/commit/{ghash}">@{ghash[:8]}</a>'
+                f' href="https://github.com/coddrago/Heroku/commit/{ghash}">@{ghash[:8]}</a>'
                 if ghash
                 else ""
             ),
@@ -407,8 +411,8 @@ class TestMod(loader.Module):
         message = await utils.answer(message, self.config["ping_emoji"])
         banner = self.config["banner_url"]
         if self.config["banner_url"] and self.config["quote_media"] is True:
-            banner = InputMediaWebPage(self.config["banner_url"], optional = True)
-        
+            banner = InputMediaWebPage(self.config["banner_url"], optional=True)
+
         await utils.answer(
             message,
             self.config["Text_Of_Ping"].format(
@@ -420,10 +424,9 @@ class TestMod(loader.Module):
                 hostname=lib_platform.node(),
                 user=getpass.getuser(),
             ),
-            file = banner,
-            invert_media = self.config["invert_media"]
+            file=banner,
+            invert_media=self.config["invert_media"],
         )
-
 
     async def client_ready(self):
         chat, _ = await utils.asset_channel(
